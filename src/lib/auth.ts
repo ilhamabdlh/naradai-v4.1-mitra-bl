@@ -35,6 +35,11 @@ const DEMO_USERS: Record<
     displayName: "Admin Bukalapak",
     allowedInstanceIds: ["bukalapak"],
   },
+  admin_benings: {
+    password: "benings2026",
+    displayName: "Admin Benings",
+    allowedInstanceIds: ["benings_brand_analysis_01_2026"],
+  },
 };
 
 function storeSession(session: StoredSession): boolean {

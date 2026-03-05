@@ -216,10 +216,10 @@ export function CompetitiveAnalysis() {
       return {
         id: item.id,
         name: item.name,
-        keywords: base.keywords,
-        competitivePosition: base.competitivePosition,
+        keywords: item.keywords ?? base.keywords,
+        competitivePosition: item.competitivePosition ?? base.competitivePosition,
         conversations: item.mentions,
-        shareOfVoice: totalMentions > 0 ? Math.round((item.mentions / totalMentions) * 100) : 0,
+        shareOfVoice: totalMentions > 0 ? parseFloat(((item.mentions / totalMentions) * 100).toFixed(1)) : 0,
         avgSentiment: item.positivePercentage / 100,
         color: item.color ?? base.color,
       } as CompetitorOverviewItem;
@@ -529,17 +529,17 @@ export function CompetitiveAnalysis() {
       {/* Competitors Overview carousel */}
       <div className="mb-6">
         <h4 className="text-slate-900 mb-3">Competitors Overview</h4>
-        <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "thin" }}>
+        <div className="flex items-stretch gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "thin" }}>
           {competitorsOverview.map((comp) => {
             const sentimentPct = Math.round(comp.avgSentiment * 100);
 
             return (
               <div
                 key={comp.id}
-                className="flex-shrink-0 w-72 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4"
+                className="flex-shrink-0 w-72 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col"
               >
                 {/* Header */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 mb-4">
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
                     style={{ backgroundColor: comp.color ?? "#8b5cf6" }}
@@ -553,9 +553,9 @@ export function CompetitiveAnalysis() {
                 </div>
 
                 {/* Keywords */}
-                <div>
+                <div className="mb-4">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Keywords</p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5 h-[68px] overflow-y-auto content-start" style={{ scrollbarWidth: "thin" }}>
                     {comp.keywords.map((kw) => (
                       <span
                         key={kw}
@@ -572,13 +572,13 @@ export function CompetitiveAnalysis() {
                   </div>
                 </div>
 
-                {/* Competitive Position */}
-                <div>
+                {/* Competitive Position — flex-1 agar semua card punya tinggi seragam */}
+                <div className="flex-1 mb-4">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Competitive Position</p>
                   <p className="text-xs text-slate-700 leading-relaxed">{comp.competitivePosition}</p>
                 </div>
 
-                {/* Stats row */}
+                {/* Stats row — selalu di bawah */}
                 <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100">
                   <div className="flex flex-col items-center gap-1 text-center">
                     <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center">

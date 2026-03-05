@@ -143,7 +143,7 @@ export function SourceContentManager({ instanceId }: SourceContentManagerProps) 
   const [manageView, setManageView] = useState<ManageView>("data");
   const [activeParentTab, setActiveParentTab] = useState<ParentTab>("brand");
   const [activeBrandSection, setActiveBrandSection] = useState<BrandSectionId>("stats");
-  const [competitiveSubTab, setCompetitiveSubTab] = useState<"issues" | "insights" | "matrix" | "sentiment" | "volume" | "sov">("issues");
+  const [competitiveSubTab, setCompetitiveSubTab] = useState<"overview" | "issues" | "insights" | "matrix" | "sentiment" | "volume" | "sov">("overview");
   const [whatsHappeningSubTab, setWhatsHappeningSubTab] = useState<string>("sentiment");
   const [campaignSubTab, setCampaignSubTab] = useState<"stats" | "performance" | "channels" | "competitors" | "recommendations" | "replyTopics" | "keyEvents" | "postEvents">("stats");
   const [outletAnalysisSubTab, setOutletAnalysisSubTab] = useState<"stats" | "priorityActions" | "mapData" | "sentimentByOutlet" | "topics" | "reviews">("stats");
@@ -396,6 +396,7 @@ export function SourceContentManager({ instanceId }: SourceContentManagerProps) 
           {activeBrandSection === "competitive" && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+            <button onClick={() => setCompetitiveSubTab("overview")} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${competitiveSubTab === "overview" ? "bg-gradient-to-r from-violet-500 to-cyan-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>Competitor Overview</button>
             <button onClick={() => setCompetitiveSubTab("issues")} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${competitiveSubTab === "issues" ? "bg-gradient-to-r from-violet-500 to-cyan-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>Competitive Issues</button>
             <button onClick={() => setCompetitiveSubTab("insights")} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${competitiveSubTab === "insights" ? "bg-gradient-to-r from-violet-500 to-cyan-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>Key Insights</button>
             <button onClick={() => setCompetitiveSubTab("matrix")} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${competitiveSubTab === "matrix" ? "bg-gradient-to-r from-violet-500 to-cyan-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>Competitive Matrix</button>
@@ -403,6 +404,12 @@ export function SourceContentManager({ instanceId }: SourceContentManagerProps) 
             <button onClick={() => setCompetitiveSubTab("volume")} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${competitiveSubTab === "volume" ? "bg-gradient-to-r from-violet-500 to-cyan-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>Volume of Mentions</button>
             <button onClick={() => setCompetitiveSubTab("sov")} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${competitiveSubTab === "sov" ? "bg-gradient-to-r from-violet-500 to-cyan-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>Share of Voice</button>
           </div>
+          {competitiveSubTab === "overview" && (
+            <CompetitorOverviewEditor
+              items={store.competitiveMatrixItems ?? []}
+              onUpdate={(v) => updateStore((p) => ({ ...p, competitiveMatrixItems: v }))}
+            />
+          )}
           {competitiveSubTab === "issues" && (
             <CompetitiveSection items={store.competitiveIssues} onUpdate={(items) => updateStore((p) => ({ ...p, competitiveIssues: items }))} />
           )}
@@ -2611,6 +2618,256 @@ function ShareOfPlatformEditor({ items, onUpdate }: { items: ShareOfPlatformRow[
   );
 }
 
+// ─── Competitor Overview Editor ─────────────────────────────────────────────
+function CompetitorOverviewEditor({
+  items,
+  onUpdate,
+}: {
+  items: CompetitiveMatrixItem[];
+  onUpdate: (v: CompetitiveMatrixItem[]) => void;
+}) {
+  const [editId, setEditId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  const updateOne = (id: string, patch: Partial<CompetitiveMatrixItem>) => {
+    onUpdate(items.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  };
+
+  const handleAdd = () => {
+    const newItem: CompetitiveMatrixItem = {
+      id: `brand_${Date.now()}`,
+      name: "",
+      mentions: 0,
+      positivePercentage: 0,
+      size: 10,
+      color: "#8b5cf6",
+      keywords: [],
+      competitivePosition: "",
+    };
+    onUpdate([...items, newItem]);
+    setEditId(newItem.id);
+    setAdding(true);
+  };
+
+  const handleDelete = (id: string) => {
+    onUpdate(items.filter((x) => x.id !== id));
+  };
+
+  const totalMentions = items.reduce((s, x) => s + (x.mentions ?? 0), 0);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-slate-800">Competitor Overview</h3>
+          <p className="text-xs text-slate-500 mt-0.5">Keywords &amp; posisi kompetitif tiap brand</p>
+        </div>
+        <button
+          onClick={handleAdd}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 text-white text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          <Plus className="w-4 h-4" /> Tambah brand
+        </button>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="py-10 text-center text-slate-400 text-sm">Belum ada data. Klik "Tambah brand".</div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {items.map((item) => {
+            const sov = totalMentions > 0 ? ((item.mentions / totalMentions) * 100).toFixed(1) : "0.0";
+            const initials = item.name ? item.name.slice(0, 2).toUpperCase() : "?";
+            return (
+              <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col gap-3">
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
+                    style={{ backgroundColor: item.color || "#8b5cf6" }}
+                  >
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-900 truncate">{item.name || <span className="text-slate-400 italic">Nama brand</span>}</p>
+                    <p className="text-[11px] text-slate-400">Competitor</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => { setEditId(item.id); setAdding(false); }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Keywords */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Keywords</p>
+                  {(item.keywords ?? []).length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {(item.keywords ?? []).map((kw) => (
+                        <span
+                          key={kw}
+                          className="px-2 py-0.5 rounded-full text-[11px] font-medium border"
+                          style={{ backgroundColor: `${item.color}15`, color: item.color, borderColor: `${item.color}40` }}
+                        >
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-300 italic">Belum ada keyword</p>
+                  )}
+                </div>
+
+                {/* Competitive Position */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Competitive Position</p>
+                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
+                    {item.competitivePosition || <span className="italic text-slate-300">Belum ada deskripsi</span>}
+                  </p>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100">
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-slate-800">{item.mentions.toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-400">Conversations</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-slate-800">{sov}%</p>
+                    <p className="text-[10px] text-slate-400">Share of Voice</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-slate-800">{item.positivePercentage}%</p>
+                    <p className="text-[10px] text-slate-400">Avg Sentiment</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Edit Dialog */}
+      {editId && (() => {
+        const row = items.find((x) => x.id === editId);
+        if (!row) return null;
+        const kwString = (row.keywords ?? []).join(", ");
+        return (
+          <Dialog open onOpenChange={(o) => { if (!o) { setEditId(null); setAdding(false); } }}>
+            <DialogContent className="rounded-2xl sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{adding ? "Tambah brand" : `Edit — ${row.name || "Brand"}`}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600">Nama Brand</label>
+                  <Input
+                    placeholder="Nama brand..."
+                    value={row.name}
+                    onChange={(e) => updateOne(row.id, { name: e.target.value })}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-600">Mentions</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={row.mentions}
+                      onChange={(e) => updateOne(row.id, { mentions: Number(e.target.value) })}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-600">Positive % (Avg Sentiment)</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      min={0}
+                      max={100}
+                      value={row.positivePercentage}
+                      onChange={(e) => updateOne(row.id, { positivePercentage: Number(e.target.value) })}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600">Warna Brand</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={row.color || "#8b5cf6"}
+                      onChange={(e) => updateOne(row.id, { color: e.target.value })}
+                      className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer"
+                    />
+                    <Input
+                      value={row.color || "#8b5cf6"}
+                      onChange={(e) => updateOne(row.id, { color: e.target.value })}
+                      className="rounded-xl flex-1 font-mono text-sm"
+                      placeholder="#8b5cf6"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600">
+                    Keywords <span className="text-slate-400">(pisahkan dengan koma)</span>
+                  </label>
+                  <Input
+                    placeholder="pelayanan, ramah, treatment, promo, ..."
+                    value={kwString}
+                    onChange={(e) =>
+                      updateOne(row.id, { keywords: e.target.value.split(",").map((k) => k.trim()).filter(Boolean) })
+                    }
+                    className="rounded-xl"
+                  />
+                  {(row.keywords ?? []).length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {(row.keywords ?? []).map((kw) => (
+                        <span
+                          key={kw}
+                          className="px-2 py-0.5 rounded-full text-[11px] border"
+                          style={{ backgroundColor: `${row.color}15`, color: row.color, borderColor: `${row.color}40` }}
+                        >
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600">Competitive Position</label>
+                  <textarea
+                    rows={4}
+                    placeholder="Deskripsi posisi kompetitif brand ini di pasar..."
+                    value={row.competitivePosition ?? ""}
+                    onChange={(e) => updateOne(row.id, { competitivePosition: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 resize-none"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setEditId(null); setAdding(false); }}>
+                  Selesai
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+    </div>
+  );
+}
+
 function CompetitiveMatrixEditor({
   matrixItems,
   onUpdateMatrix,
@@ -2629,12 +2886,12 @@ function CompetitiveMatrixEditor({
   const [quadEditId, setQuadEditId] = useState<string | null>(null);
   const [quadAdding, setQuadAdding] = useState(false);
   const updateOne = (id: string, u: Partial<CompetitiveMatrixItem>) => onUpdateMatrix(list.map((x) => (x.id === id ? { ...x, ...u } : x)));
-  const add = () => { const newItem = { id: generateId(), name: "", mentions: 0, positivePercentage: 0, size: 0, color: "#8b5cf6" }; onUpdateMatrix([...list, newItem]); setEditId(newItem.id); setAdding(true); };
+  const add = () => { const newItem: CompetitiveMatrixItem = { id: generateId(), name: "", mentions: 0, positivePercentage: 0, size: 0, color: "#8b5cf6", keywords: [], competitivePosition: "" }; onUpdateMatrix([...list, newItem]); setEditId(newItem.id); setAdding(true); };
   const updateQuad = (id: string, u: Partial<QuadrantAnalysisItem>) => onUpdateQuadrant(quads.map((q) => (q.id === id ? { ...q, ...u } : q)));
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h4 className="text-sm font-semibold text-slate-800">Competitive Matrix (scatter data)</h4>
+        <h4 className="text-sm font-semibold text-slate-800">Competitor Overview & Matrix Data</h4>
         <div className="flex justify-end">
           <Button onClick={add} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 hover:opacity-90">
             <Plus className="w-4 h-4 mr-2" />
@@ -2645,21 +2902,39 @@ function CompetitiveMatrixEditor({
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700">Name</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-700">Brand</th>
                 <th className="px-4 py-3 text-left font-semibold text-slate-700">Mentions</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700">Positive %</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700">Size</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-700">Sentiment %</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-700">Keywords</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-700">Competitive Position</th>
                 <th className="px-4 py-3 text-right font-semibold text-slate-700">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {list.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium">{row.name}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: row.color || "#8b5cf6" }} />
+                      <span className="font-medium">{row.name}</span>
+                    </div>
+                  </td>
                   <td className="px-4 py-3">{row.mentions.toLocaleString()}</td>
                   <td className="px-4 py-3">{row.positivePercentage}%</td>
-                  <td className="px-4 py-3">{row.size}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 max-w-[160px]">
+                    <div className="flex flex-wrap gap-1">
+                      {(row.keywords ?? []).slice(0, 3).map((kw) => (
+                        <span key={kw} className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-600 border border-slate-200">{kw}</span>
+                      ))}
+                      {(row.keywords ?? []).length > 3 && (
+                        <span className="text-[10px] text-slate-400">+{(row.keywords ?? []).length - 3}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 max-w-[220px]">
+                    <p className="text-xs text-slate-600 line-clamp-2">{row.competitivePosition || "—"}</p>
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditId(row.id)}><Pencil className="w-3.5 h-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => onUpdateMatrix(list.filter((x) => x.id !== row.id))}><Trash2 className="w-3.5 h-3.5" /></Button>
                   </td>
@@ -2671,16 +2946,65 @@ function CompetitiveMatrixEditor({
         {editId && (() => {
           const row = list.find((x) => x.id === editId);
           if (!row) return null;
+          const kwString = (row.keywords ?? []).join(", ");
           return (
             <Dialog open onOpenChange={(o) => !o && (setEditId(null), setAdding(false))}>
-              <DialogContent className="rounded-2xl sm:max-w-sm">
-                <DialogHeader><DialogTitle>{adding ? "Tambah brand" : "Edit"}</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <Input placeholder="Name" value={row.name} onChange={(e) => updateOne(row.id, { name: e.target.value })} className="rounded-xl" />
-                  <Input type="number" placeholder="Mentions" value={row.mentions} onChange={(e) => updateOne(row.id, { mentions: Number(e.target.value) || 0 })} className="rounded-xl" />
-                  <Input type="number" placeholder="Positive %" value={row.positivePercentage} onChange={(e) => updateOne(row.id, { positivePercentage: Number(e.target.value) || 0 })} className="rounded-xl" />
-                  <Input type="number" placeholder="Size" value={row.size} onChange={(e) => updateOne(row.id, { size: Number(e.target.value) || 0 })} className="rounded-xl" />
-                  <Input placeholder="Color (#hex)" value={row.color} onChange={(e) => updateOne(row.id, { color: e.target.value })} className="rounded-xl" />
+              <DialogContent className="rounded-2xl sm:max-w-lg">
+                <DialogHeader><DialogTitle>{adding ? "Tambah brand" : `Edit — ${row.name || "Brand"}`}</DialogTitle></DialogHeader>
+                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-600">Brand Name</label>
+                      <Input placeholder="Nama brand" value={row.name} onChange={(e) => updateOne(row.id, { name: e.target.value })} className="rounded-xl" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-600">Color (#hex)</label>
+                      <div className="flex gap-2">
+                        <input type="color" value={row.color || "#8b5cf6"} onChange={(e) => updateOne(row.id, { color: e.target.value })} className="h-10 w-12 rounded-lg border border-slate-200 cursor-pointer p-1" />
+                        <Input placeholder="#hex" value={row.color} onChange={(e) => updateOne(row.id, { color: e.target.value })} className="rounded-xl flex-1" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-600">Mentions</label>
+                      <Input type="number" placeholder="0" value={row.mentions} onChange={(e) => updateOne(row.id, { mentions: Number(e.target.value) || 0 })} className="rounded-xl" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-600">Positive % (0–100)</label>
+                      <Input type="number" placeholder="0" value={row.positivePercentage} onChange={(e) => updateOne(row.id, { positivePercentage: Number(e.target.value) || 0 })} className="rounded-xl" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-600">Size (bubble)</label>
+                      <Input type="number" placeholder="0" value={row.size} onChange={(e) => updateOne(row.id, { size: Number(e.target.value) || 0 })} className="rounded-xl" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-600">Keywords <span className="text-slate-400">(pisahkan dengan koma)</span></label>
+                    <Input
+                      placeholder="pelayanan, ramah, treatment, promo, ..."
+                      value={kwString}
+                      onChange={(e) => updateOne(row.id, { keywords: e.target.value.split(",").map((k) => k.trim()).filter(Boolean) })}
+                      className="rounded-xl"
+                    />
+                    {(row.keywords ?? []).length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {(row.keywords ?? []).map((kw) => (
+                          <span key={kw} className="px-2 py-0.5 rounded-full text-[11px] bg-violet-50 text-violet-700 border border-violet-200">{kw}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-600">Competitive Position</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Deskripsi posisi kompetitif brand ini di pasar..."
+                      value={row.competitivePosition ?? ""}
+                      onChange={(e) => updateOne(row.id, { competitivePosition: e.target.value })}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 resize-none"
+                    />
+                  </div>
                 </div>
                 <DialogFooter><Button variant="outline" onClick={() => { setEditId(null); setAdding(false); }}>Tutup</Button></DialogFooter>
               </DialogContent>

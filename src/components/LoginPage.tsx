@@ -1,7 +1,7 @@
 import { useState, FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Sparkles, Eye, EyeOff, Shield, Zap } from "lucide-react";
-import { login, getDemoAccounts } from "@/lib/auth";
+import { Sparkles, Eye, EyeOff, Shield } from "lucide-react";
+import { login } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,8 +26,6 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<"username" | "password" | null>(null);
 
-  const demoAccounts = getDemoAccounts();
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError("");
@@ -39,12 +37,6 @@ export function LoginPage() {
     } else {
       setError("Invalid username or password. Please try again.");
     }
-  };
-
-  const fillDemo = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-    setError("");
   };
 
   return (
@@ -150,24 +142,6 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 pt-5 border-t border-slate-100">
-              <p className="text-xs font-medium text-slate-500 mb-3 flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-500" />
-                Demo accounts
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {demoAccounts.map((acc) => (
-                  <button
-                    key={acc.username}
-                    type="button"
-                    onClick={() => fillDemo(acc.username, acc.password)}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-violet-100 hover:text-violet-700 font-medium transition-colors"
-                  >
-                    {acc.username} · {acc.role}
-                  </button>
-                ))}
-              </div>
-            </div>
           </CardContent>
         </Card>
 

@@ -225,6 +225,10 @@ export interface CompetitiveMatrixItem {
   positivePercentage: number;
   size: number;
   color: string;
+  /** Kata kunci yang sering diasosiasikan dengan brand ini. */
+  keywords?: string[];
+  /** Deskripsi posisi kompetitif brand ini di pasar. */
+  competitivePosition?: string;
 }
 
 export interface CompetitorOverviewItem {

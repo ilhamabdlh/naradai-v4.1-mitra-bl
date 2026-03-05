@@ -529,10 +529,21 @@ export function loadDashboardContent(instanceId: string = "default"): DashboardC
       whatsHappeningKOLMatrix: parsed.whatsHappeningKOLMatrix ?? defaultDashboardContent.whatsHappeningKOLMatrix,
       whatsHappeningAIKOLAnalysis: parsed.whatsHappeningAIKOLAnalysis ?? defaultDashboardContent.whatsHappeningAIKOLAnalysis,
       whatsHappeningShareOfPlatform,
-      competitiveMatrixItems:
-        (Array.isArray(parsed.competitiveMatrixItems) && parsed.competitiveMatrixItems.length > 0
-          ? parsed.competitiveMatrixItems
-          : initial?.competitiveMatrixItems) ?? defaultDashboardContent.competitiveMatrixItems,
+      competitiveMatrixItems: (() => {
+        const cached = parsed.competitiveMatrixItems;
+        const fromInitial = initial?.competitiveMatrixItems;
+        const def = defaultDashboardContent.competitiveMatrixItems;
+        if (!Array.isArray(cached) || cached.length === 0) return fromInitial ?? def;
+        // Merge keywords & competitivePosition dari initial jika cache belum punya
+        return cached.map((item) => {
+          const match = fromInitial?.find((i) => i.name === item.name || i.id === item.id);
+          return {
+            ...item,
+            keywords: (item.keywords && item.keywords.length > 0) ? item.keywords : (match?.keywords ?? []),
+            competitivePosition: item.competitivePosition || match?.competitivePosition || "",
+          };
+        });
+      })() ?? defaultDashboardContent.competitiveMatrixItems,
       competitiveQuadrantAnalysis:
         (Array.isArray(parsed.competitiveQuadrantAnalysis) && parsed.competitiveQuadrantAnalysis.length > 0
           ? parsed.competitiveQuadrantAnalysis

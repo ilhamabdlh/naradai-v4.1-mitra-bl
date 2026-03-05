@@ -4395,15 +4395,51 @@ function buildBeningsInitial(d: DashboardContentStore): DashboardContentStore {
       { date: "Mar 05", twitter: 12, instagram: 58, facebook: 0, tiktok: 22, googlemaps: 8  },
     ],
     competitiveMatrixItems: [
-      { id: "1", name: "Bening's",      mentions: 1124, positivePercentage: 84.2, size: 1124, color: "#E5001C" },
-      { id: "2", name: "ZAP",           mentions: 850,  positivePercentage: 81.5, size: 850,  color: "#81B622" },
-      { id: "3", name: "Erha",          mentions: 620,  positivePercentage: 75.0, size: 620,  color: "#00529C" },
-      { id: "4", name: "Sozo",          mentions: 410,  positivePercentage: 82.0, size: 410,  color: "#6366F1" },
-      { id: "5", name: "Natasha",       mentions: 310,  positivePercentage: 68.0, size: 310,  color: "#FFA500" },
-      { id: "6", name: "Derma Express", mentions: 280,  positivePercentage: 85.0, size: 280,  color: "#14B8A6" },
-      { id: "7", name: "Dermaster",     mentions: 150,  positivePercentage: 88.0, size: 150,  color: "#D946EF" },
-      { id: "8", name: "Airin",         mentions: 110,  positivePercentage: 76.0, size: 110,  color: "#F43F5E" },
-      { id: "9", name: "Naavagreen",    mentions: 95,   positivePercentage: 65.0, size: 95,   color: "#84CC16" },
+      {
+        id: "1", name: "Bening's", mentions: 1124, positivePercentage: 84.2, size: 1124, color: "#E5001C",
+        keywords: ["pelayanan", "ramah", "treatment", "promo", "nyaman", "reservasi", "admin", "skin barrier", "moisture gel", "kendari"],
+        competitivePosition: "Strong leader in product efficacy perception (skin barrier) and regional promo results, but digital reservation responsiveness is a critical vulnerability.",
+      },
+      {
+        id: "2", name: "ZAP", mentions: 850, positivePercentage: 81.5, size: 850, color: "#81B622",
+        keywords: ["booking", "online experience", "treatment", "lebaran", "promo"],
+        competitivePosition: "Benchmark leader for seamless online booking and digital customer journey, maintaining high baseline satisfaction.",
+      },
+      {
+        id: "3", name: "Erha", mentions: 620, positivePercentage: 75.0, size: 620, color: "#00529C",
+        keywords: ["premium", "dermatology", "clinic", "ultimate", "expert"],
+        competitivePosition: "Dominant clinical expert in high-end dermatology with a strong medical reputation, though slightly lower sentiment in mass-market engagement.",
+      },
+      {
+        id: "4", name: "Sozo", mentions: 410, positivePercentage: 82.0, size: 410, color: "#6366F1",
+        keywords: ["booking", "fast response", "modern"],
+        competitivePosition: "Rising contender with a focus on modern clinical experiences and fast-response customer service channels.",
+      },
+      {
+        id: "5", name: "Natasha", mentions: 310, positivePercentage: 68.0, size: 310, color: "#FFA500",
+        keywords: ["skincare", "tradisional", "promo"],
+        competitivePosition: "Established traditional player with deep market penetration, but currently experiencing low digital sentiment and engagement.",
+      },
+      {
+        id: "6", name: "Derma Express", mentions: 280, positivePercentage: 85.0, size: 280, color: "#14B8A6",
+        keywords: ["cakep", "terjangkau", "ekspansi"],
+        competitivePosition: "High-growth player winning on the 'aesthetic but affordable' value proposition with high positive sentiment.",
+      },
+      {
+        id: "7", name: "Dermaster", mentions: 150, positivePercentage: 88.0, size: 150, color: "#D946EF",
+        keywords: ["contouring", "premium", "mahal"],
+        competitivePosition: "Premium niche leader in facial contouring and clinical results, commanding high sentiment but lower overall volume.",
+      },
+      {
+        id: "8", name: "Airin", mentions: 110, positivePercentage: 76.0, size: 110, color: "#F43F5E",
+        keywords: ["jerawat", "konsultasi", "lokal"],
+        competitivePosition: "Specialized local clinic with strong trust in acne treatment and personalized consultation.",
+      },
+      {
+        id: "9", name: "Naavagreen", mentions: 95, positivePercentage: 65.0, size: 95, color: "#84CC16",
+        keywords: ["murah", "terjangkau", "antrian"],
+        competitivePosition: "Market leader in the extreme budget segment, though struggling with high negative sentiment regarding queue times and facility quality.",
+      },
     ],
     competitiveQuadrantAnalysis: [
       { id: "1", label: "Market Leaders",           brands: ["Bening's", "ZAP", "Erha"],             note: "High Volume, Broad Market Reach" },
