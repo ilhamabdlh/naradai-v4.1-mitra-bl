@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { TrendingUp, Target, AlertTriangle, Lightbulb, ThermometerSun, Volume2, BarChart3, Trophy, MessageSquare, Mic2, Smile, PieChart } from "lucide-react";
+import { TrendingUp, Target, AlertTriangle, Lightbulb, ThermometerSun, Volume2, BarChart3, Trophy, MessageSquare, Mic2, Smile, PieChart, ChevronLeft, ChevronRight } from "lucide-react";
 import { ShareOfPlatform } from "./ShareOfPlatform";
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell, Legend, BarChart, Bar } from "recharts";
 import { CompetitiveMatrixChart } from "./CompetitiveMatrixChart";
@@ -166,6 +166,7 @@ const defaultVolumeHeatmap: HeatmapData[] = [
 
 export function CompetitiveAnalysis() {
   const content = useDashboardContent();
+  const [activeInsightIndex, setActiveInsightIndex] = useState(0);
 
   // --- Competitors Overview defaults ---
   const defaultCompetitorsOverview: CompetitorOverviewItem[] = [
@@ -749,58 +750,152 @@ export function CompetitiveAnalysis() {
           </div>
         </div>
 
-        {/* Key Insights - from content.competitiveKeyInsights per instance */}
+        {/* Key Insights - now as horizontal carousel */}
         <div className="mt-6 pt-6 border-t border-slate-200">
-          <h5 className="text-sm font-semibold text-slate-900 mb-3">Key Insights</h5>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {(content?.competitiveKeyInsights?.length
-              ? content.competitiveKeyInsights
-              : [
-                  { id: "ki1", type: "critical" as const, title: "Critical Issues", description: "Customer Service & Packaging are significantly underperforming with high visibility", bullets: ["Support Availability: -40% sentiment, +35% mentions", "Customer Service: -35% sentiment, +40% mentions"] },
-                  { id: "ki2", type: "strength" as const, title: "Competitive Strengths", description: "Innovation & Product Quality are strong differentiators", bullets: ["Innovation: +18% sentiment, +35% mentions", "Shipping Speed: +20% sentiment, +10% mentions"] },
-                ]
-            ).map((item) =>
-              item.type === "critical" ? (
-                <div key={item.id} className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-                      <AlertTriangle className="w-4 h-4 text-red-600" />
+          {(() => {
+            const items =
+              content?.competitiveKeyInsights?.length
+                ? content.competitiveKeyInsights
+                : [
+                    {
+                      id: "ki1",
+                      type: "critical" as const,
+                      title: "Critical Issues",
+                      description:
+                        "Customer Service & Packaging are significantly underperforming with high visibility",
+                      bullets: [
+                        "Support Availability: -40% sentiment, +35% mentions",
+                        "Customer Service: -35% sentiment, +40% mentions",
+                      ],
+                    },
+                    {
+                      id: "ki2",
+                      type: "strength" as const,
+                      title: "Competitive Strengths",
+                      description: "Innovation & Product Quality are strong differentiators",
+                      bullets: [
+                        "Innovation: +18% sentiment, +35% mentions",
+                        "Shipping Speed: +20% sentiment, +10% mentions",
+                      ],
+                    },
+                  ];
+
+            const total = items.length;
+            const safeIndex =
+              total === 0 ? 0 : Math.min(total - 1, Math.max(0, activeInsightIndex));
+
+            const goPrev = () => {
+              if (total <= 1) return;
+              setActiveInsightIndex((prev) => (prev - 1 + total) % total);
+            };
+
+            const goNext = () => {
+              if (total <= 1) return;
+              setActiveInsightIndex((prev) => (prev + 1) % total);
+            };
+
+            if (total === 0) return null;
+
+            return (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h5 className="text-sm font-semibold text-slate-900">Key Insights</h5>
+                  {total > 1 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">
+                        {safeIndex + 1} / {total}
+                      </span>
+                      <div className="inline-flex rounded-full border border-slate-200 bg-white shadow-sm overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={goPrev}
+                          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={goNext}
+                          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-l border-slate-200 transition-colors"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-red-900 mb-1">{item.title}</p>
-                      <p className="text-xs text-red-700 mb-2">{item.description}</p>
-                      {item.bullets?.length > 0 && (
-                        <ul className="text-xs text-red-600 space-y-1">
-                          {item.bullets.map((b, i) => (
-                            <li key={i}>• {b}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
-              ) : (
-                <div key={item.id} className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-emerald-900 mb-1">{item.title}</p>
-                      <p className="text-xs text-emerald-700 mb-2">{item.description}</p>
-                      {item.bullets?.length > 0 && (
-                        <ul className="text-xs text-emerald-600 space-y-1">
-                          {item.bullets.map((b, i) => (
-                            <li key={i}>• {b}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
+
+                <div className="relative min-h-[180px]">
+                  {items.map((item, idx) => {
+                    const isActive = idx === safeIndex;
+                    const baseClasses =
+                      "rounded-lg p-4 transition-all duration-300 ease-out " +
+                      (isActive
+                        ? "opacity-100 translate-x-0 relative"
+                        : "opacity-0 translate-x-4 pointer-events-none absolute inset-0");
+
+                    if (item.type === "critical") {
+                      return (
+                        <div
+                          key={item.id}
+                          className={`bg-red-50 border border-red-200 ${baseClasses}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                              <AlertTriangle className="w-4 h-4 text-red-600" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-red-900 mb-1">
+                                {item.title}
+                              </p>
+                              <p className="text-xs text-red-700 mb-2">
+                                {item.description}
+                              </p>
+                              {item.bullets?.length > 0 && (
+                                <ul className="text-xs text-red-600 space-y-1">
+                                  {item.bullets.map((b, i) => (
+                                    <li key={i}>• {b}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`bg-emerald-50 border border-emerald-200 ${baseClasses}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                            <TrendingUp className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-emerald-900 mb-1">
+                              {item.title}
+                            </p>
+                            <p className="text-xs text-emerald-700 mb-2">
+                              {item.description}
+                            </p>
+                            {item.bullets?.length > 0 && (
+                              <ul className="text-xs text-emerald-600 space-y-1">
+                                {item.bullets.map((b, i) => (
+                                  <li key={i}>• {b}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )
-            )}
-          </div>
+              </>
+            );
+          })()}
         </div>
       </div>
 

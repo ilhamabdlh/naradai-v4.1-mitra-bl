@@ -510,8 +510,14 @@ export function loadDashboardContent(instanceId: string = "default"): DashboardC
       outletSatisfaction: parsed.outletSatisfaction ?? defaultDashboardContent.outletSatisfaction,
       risks: parsed.risks ?? defaultDashboardContent.risks,
       opportunities: parsed.opportunities ?? defaultDashboardContent.opportunities,
-      competitiveIssues: parsed.competitiveIssues ?? defaultDashboardContent.competitiveIssues,
-      competitiveKeyInsights: parsed.competitiveKeyInsights ?? defaultDashboardContent.competitiveKeyInsights,
+      competitiveIssues:
+        (Array.isArray(parsed.competitiveIssues) && parsed.competitiveIssues.length > 0
+          ? parsed.competitiveIssues
+          : initial?.competitiveIssues) ?? defaultDashboardContent.competitiveIssues,
+      competitiveKeyInsights:
+        (Array.isArray(parsed.competitiveKeyInsights) && parsed.competitiveKeyInsights.length > 0
+          ? parsed.competitiveKeyInsights
+          : initial?.competitiveKeyInsights) ?? defaultDashboardContent.competitiveKeyInsights,
       whatsHappeningSentimentTrends: (() => {
         const cached  = parsed.whatsHappeningSentimentTrends;
         const fromInit = initial?.whatsHappeningSentimentTrends;

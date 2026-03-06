@@ -215,12 +215,18 @@ export function ShareOfPlatform() {
       ? (storeData as ShareOfPlatformRow[]).map(normalizeShareRow) as ChartRow[]
       : dataByGranularity["daily"];
 
-    // Hitung total per platform untuk menentukan platform mana yang aktif
-    const totals: Record<string, number> = {};
-    for (const key of PLATFORM_KEYS) {
-      totals[key] = sourceRows.reduce((sum, row) => sum + ((row[key] as number) || 0), 0);
+    // Tampilkan semua platform yang muncul di data (termasuk yang total 0), agar value 0 tetap tampil
+    const platformKeysInData = new Set<string>();
+    for (const row of sourceRows) {
+      for (const k of PLATFORM_KEYS) {
+        const v = (row as Record<string, unknown>)[k];
+        if (v !== undefined && v !== null) platformKeysInData.add(k);
+      }
     }
-    const active = PLATFORM_KEYS.filter((k) => totals[k] > 0);
+    const active =
+      platformKeysInData.size > 0
+        ? PLATFORM_KEYS.filter((k) => platformKeysInData.has(k))
+        : [...PLATFORM_KEYS];
 
     const allDates = sourceRows.map((i) => i.date);
     const aggregated = aggregateShareOfPlatformData(sourceRows, granularity, allDates);
