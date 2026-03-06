@@ -88,15 +88,21 @@ export function CompetitorCampaigns() {
                   );
                 })}
                 <td className="px-5 py-3.5 text-right">
-                  <div className="flex items-center justify-end gap-1.5">
-                    <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${c.sentiment >= 0.7 ? "bg-emerald-400" : c.sentiment >= 0.5 ? "bg-amber-400" : "bg-red-400"}`}
-                        style={{ width: `${c.sentiment * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-slate-600">{(c.sentiment * 100).toFixed(0)}%</span>
-                  </div>
+                  {(() => {
+                    // Normalise: stored value may be 0–1 (decimal) or 0–100 (percent)
+                    const sentDecimal = c.sentiment > 1 ? c.sentiment / 100 : c.sentiment;
+                    return (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${sentDecimal >= 0.7 ? "bg-emerald-400" : sentDecimal >= 0.5 ? "bg-amber-400" : "bg-red-400"}`}
+                            style={{ width: `${sentDecimal * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-slate-600">{(sentDecimal * 100).toFixed(1)}%</span>
+                      </div>
+                    );
+                  })()}
                 </td>
               </tr>
             ))}

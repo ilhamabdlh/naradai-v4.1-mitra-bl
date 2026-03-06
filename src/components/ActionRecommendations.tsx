@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { ActionDetailsModal } from "./ActionDetailsModal";
 import { Share2, CheckCircle, Clock, Circle } from "lucide-react";
 import { useDashboardContent } from "@/contexts/DashboardContentContext";
+import { useDataFilter } from "@/contexts/DataFilterContext";
 import useEmblaCarousel from "embla-carousel-react";
 
 const categoryTooltips: Record<string, string> = {
@@ -14,10 +15,22 @@ const categoryTooltips: Record<string, string> = {
 
 const priorityIconMap = { critical: AlertTriangle, high: MessageSquare, medium: Zap } as const;
 
+const ACTION_STATUS_KEY_PREFIX = "naradai_action_statuses_";
+
 export function ActionRecommendations() {
   const content = useDashboardContent();
+  const { appliedFilter } = useDataFilter();
+  const storageKey = `${ACTION_STATUS_KEY_PREFIX}${appliedFilter.projectId}`;
+
   const [selectedAction, setSelectedAction] = useState<any>(null);
-  const [actionStatuses, setActionStatuses] = useState<Record<string, string>>({});
+  const [actionStatuses, setActionStatuses] = useState<Record<string, string>>(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    } catch {
+      return {};
+    }
+  });
   const [showShareMenu, setShowShareMenu] = useState<string | null>(null);
   const [openCategoryTooltip, setOpenCategoryTooltip] = useState<string | null>(null);
   const [openMetricTooltip, setOpenMetricTooltip] = useState<string | null>(null);
@@ -86,8 +99,22 @@ export function ActionRecommendations() {
   };
 
   const handleStatusChange = (actionId: string, status: string) => {
-    setActionStatuses((prev) => ({ ...prev, [actionId]: status }));
+    setActionStatuses((prev) => {
+      const next = { ...prev, [actionId]: status };
+      try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
   };
+
+  // Reload statuses jika instance (projectId) berubah
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      setActionStatuses(raw ? (JSON.parse(raw) as Record<string, string>) : {});
+    } catch {
+      setActionStatuses({});
+    }
+  }, [storageKey]);
 
   const handleShare = (actionId: string, method: string) => {
     const action = actions.find((a) => a.id === actionId);
@@ -286,192 +313,174 @@ export function ActionRecommendations() {
               {/* Priority indicator with glow */}
                 <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${colorScheme.topBar} shadow-lg`} />
               
-              <div className="p-6">
+              <div className="p-6 flex flex-col h-full">
+                {/* ── FIXED TOP: Category + Icon/Impact/Status ── */}
+                <div>
                   {/* Quadrant Category Badge */}
-                    <div className="mb-4">
-                      <div className="inline-flex items-center gap-1.5">
-                        <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${colorScheme.categoryBg} ${colorScheme.categoryText} ${colorScheme.categoryBorder}`}>
-                          <Target className="w-3.5 h-3.5 mr-1.5" />
-                          {action.category}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setOpenCategoryTooltip(openCategoryTooltip === action.id ? null : action.id)
-                          }
-                          onMouseEnter={() => setOpenCategoryTooltip(action.id)}
-                          onMouseLeave={() => setOpenCategoryTooltip(null)}
-                          className="text-slate-400 hover:text-violet-500 transition-colors"
-                          aria-label={`Info about ${action.category}`}
-                        >
-                          <Info className="w-3.5 h-3.5" />
-                        </button>
+                  <div className="mb-4">
+                    <div className="inline-flex items-center gap-1.5">
+                      <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${colorScheme.categoryBg} ${colorScheme.categoryText} ${colorScheme.categoryBorder}`}>
+                        <Target className="w-3.5 h-3.5 mr-1.5" />
+                        {action.category}
                       </div>
-                      {openCategoryTooltip === action.id && categoryTooltips[action.category] && (
-                        <div className="mt-2 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs leading-relaxed shadow-lg">
-                          {categoryTooltips[action.category]}
-                        </div>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setOpenCategoryTooltip(openCategoryTooltip === action.id ? null : action.id)}
+                        onMouseEnter={() => setOpenCategoryTooltip(action.id)}
+                        onMouseLeave={() => setOpenCategoryTooltip(null)}
+                        className="text-slate-400 hover:text-violet-500 transition-colors"
+                        aria-label={`Info about ${action.category}`}
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-
-                {/* Header: Icon, Impact/Effort, Status */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105 bg-gradient-to-br ${colorScheme.iconBg}`}>
-                    <Icon className="w-6 h-6 text-white" />
+                    {openCategoryTooltip === action.id && categoryTooltips[action.category] && (
+                      <div className="mt-2 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs leading-relaxed shadow-lg">
+                        {categoryTooltips[action.category]}
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${impactColors[action.impact as keyof typeof impactColors]}`}>
-                        {action.impact} Impact
-                      </span>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${effortColors[action.effort as keyof typeof effortColors]}`}>
-                        {action.effort} Effort
-                      </span>
+
+                  {/* Header: Icon, Impact/Effort, Status */}
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105 bg-gradient-to-br flex-shrink-0 ${colorScheme.iconBg}`}>
+                      <Icon className="w-6 h-6 text-white" />
                     </div>
-                    <div className="flex items-center justify-between">
-                      {getStatusBadge(action.id)}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${impactColors[action.impact as keyof typeof impactColors]}`}>
+                          {action.impact} Impact
+                        </span>
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${effortColors[action.effort as keyof typeof effortColors]}`}>
+                          {action.effort} Effort
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        {getStatusBadge(action.id)}
+                        <div className="relative">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setShowShareMenu(showShareMenu === action.id ? null : action.id); }}
+                            className="p-1.5 rounded-lg transition-all hover:bg-white/60"
+                            title="Share action"
+                          >
+                            <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                          </button>
+                          {showShareMenu === action.id && (
+                            <div className="absolute right-0 top-full mt-2 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden z-10 min-w-[140px]">
+                              <button onClick={() => handleShare(action.id, "copy")} className="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 transition-colors text-slate-700">Copy link</button>
+                              <button onClick={() => handleShare(action.id, "email")} className="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 transition-colors text-slate-700 border-t border-slate-100">Send via email</button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── FLEX-1 MIDDLE: Title + Description + Related Issues ── */}
+                <div className="flex-1 flex flex-col">
+                  {/* Title */}
+                  <h3 className="mb-3 leading-snug text-slate-900">{action.title}</h3>
+
+                  {/* Description — flex-1 agar mendorong related issues ke posisi sama */}
+                  <p className="text-sm leading-relaxed mb-4 text-slate-600 flex-1">
+                    {action.description}
+                  </p>
+
+                  {/* Related Issues */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <p className="text-xs font-semibold text-slate-700">Related Issues:</p>
                       <div className="relative">
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowShareMenu(showShareMenu === action.id ? null : action.id);
-                          }}
-                          className="p-1.5 rounded-lg transition-all hover:bg-white/60"
-                          title="Share action"
+                          type="button"
+                          onClick={() => setOpenMetricTooltip(openMetricTooltip === `${action.id}-issues` ? null : `${action.id}-issues`)}
+                          onMouseEnter={() => setOpenMetricTooltip(`${action.id}-issues`)}
+                          onMouseLeave={() => setOpenMetricTooltip(null)}
+                          className="text-slate-400 hover:text-violet-500 transition-colors"
+                          aria-label="Info about related issues"
                         >
-                          <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                          <Info className="w-3 h-3" />
                         </button>
-                        {showShareMenu === action.id && (
-                          <div className="absolute right-0 top-full mt-2 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden z-10 min-w-[140px]">
-                            <button
-                              onClick={() => handleShare(action.id, "copy")}
-                              className="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 transition-colors text-slate-700"
-                            >
-                              Copy link
-                            </button>
-                            <button
-                              onClick={() => handleShare(action.id, "email")}
-                              className="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 transition-colors text-slate-700 border-t border-slate-100"
-                            >
-                              Send via email
-                            </button>
+                        {openMetricTooltip === `${action.id}-issues` && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs leading-relaxed shadow-lg z-10 pointer-events-none">
+                            Related issues are topics or themes connected to this priority action.
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Title */}
-                <h3 className="mb-3 leading-snug text-slate-900">{action.title}</h3>
-
-                {/* Description */}
-                <p className="text-sm leading-relaxed mb-4 text-slate-600">
-                  {action.description}
-                </p>
-
-                {/* Related Issues */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <p className="text-xs font-semibold text-slate-700">Related Issues:</p>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setOpenMetricTooltip(openMetricTooltip === `${action.id}-issues` ? null : `${action.id}-issues`)}
-                        onMouseEnter={() => setOpenMetricTooltip(`${action.id}-issues`)}
-                        onMouseLeave={() => setOpenMetricTooltip(null)}
-                        className="text-slate-400 hover:text-violet-500 transition-colors"
-                        aria-label="Info about related issues"
-                      >
-                        <Info className="w-3 h-3" />
-                      </button>
-                      {openMetricTooltip === `${action.id}-issues` && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs leading-relaxed shadow-lg z-10 pointer-events-none">
-                          Related issues are topics or themes that are connected to this priority action. These issues help identify the broader context and related problems that may need attention.
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
-                        </div>
-                      )}
+                    <div className="flex flex-wrap gap-2 min-h-[28px]">
+                      {action.relatedIssues.map((issue: string, idx: number) => (
+                        <span key={idx} className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${colorScheme.issueBg} ${colorScheme.issueText} ${colorScheme.issueBorder}`}>
+                          {issue}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {action.relatedIssues.map((issue, idx) => (
-                      <span
-                        key={idx}
-                        className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${colorScheme.issueBg} ${colorScheme.issueText} ${colorScheme.issueBorder}`}
-                      >
-                        {issue}
-                      </span>
-                    ))}
-                  </div>
                 </div>
 
-                {/* Divider */}
-                <div className="h-px mb-6 bg-slate-200" />
+                {/* ── FIXED BOTTOM: Divider + Metrics + Recommendation + CTA ── */}
+                <div>
+                  {/* Divider */}
+                  <div className="h-px mb-4 bg-slate-200" />
 
-                  {/* Metrics - Compact inline */}
+                  {/* Metrics */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
                       {getTrendIcon(action.metrics.trend)}
-                      <span className="text-xs font-medium text-slate-900">
-                        {action.metrics.mentions.toLocaleString()} mentions
-                      </span>
+                      <span className="text-xs font-medium text-slate-900">{action.metrics.mentions.toLocaleString()} mentions</span>
                       <button
                         type="button"
-                        onClick={() => setOpenMetricTooltip(openMetricTooltip === `${action.id}-mentions` ? null : `${action.id}-mentions`)}
                         onMouseEnter={() => setOpenMetricTooltip(`${action.id}-mentions`)}
                         onMouseLeave={() => setOpenMetricTooltip(null)}
                         className="text-slate-400 hover:text-violet-500 transition-colors"
-                        aria-label="Info about mentions"
                       >
                         <Info className="w-3 h-3" />
                       </button>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${typeof action.metrics.sentiment === "string" ? /negative/i.test(action.metrics.sentiment) : action.metrics.sentiment < 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
-                        {typeof action.metrics.sentiment === "string" ? action.metrics.sentiment : (action.metrics.sentiment > 0 ? '+' : '') + (action.metrics.sentiment as number).toFixed(2)} sentiment
+                      <div className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${typeof action.metrics.sentiment === "string" ? /negative/i.test(action.metrics.sentiment) ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700" : action.metrics.sentiment < 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
+                        {typeof action.metrics.sentiment === "string" ? action.metrics.sentiment : (action.metrics.sentiment > 0 ? "+" : "") + (action.metrics.sentiment as number).toFixed(2)} sentiment
                       </div>
                       <button
                         type="button"
-                        onClick={() => setOpenMetricTooltip(openMetricTooltip === `${action.id}-sentiment` ? null : `${action.id}-sentiment`)}
                         onMouseEnter={() => setOpenMetricTooltip(`${action.id}-sentiment`)}
                         onMouseLeave={() => setOpenMetricTooltip(null)}
                         className="text-slate-400 hover:text-violet-500 transition-colors"
-                        aria-label="Info about sentiment"
                       >
                         <Info className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
                   {openMetricTooltip === `${action.id}-mentions` && (
-                    <div className="mb-4 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs leading-relaxed shadow-lg">
+                    <div className="mb-3 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs leading-relaxed shadow-lg">
                       The number of conversations related to your brand that constitute this issue.
                     </div>
                   )}
                   {openMetricTooltip === `${action.id}-sentiment` && (
-                    <div className="mb-4 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs leading-relaxed shadow-lg">
+                    <div className="mb-3 px-3 py-2 rounded-lg bg-slate-800 text-white text-xs leading-relaxed shadow-lg">
                       The average sentiment of conversations related to your brand that constitute this issue.
                     </div>
                   )}
-                  {!openMetricTooltip?.startsWith(`${action.id}-`) && <div className="mb-4" />}
+                  {!openMetricTooltip?.startsWith(`${action.id}-`) && <div className="mb-3" />}
 
-                {/* Recommendation */}
-                <div className="rounded-xl p-4 mb-6 bg-white/60 border border-slate-200">
-                  <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-violet-600" />
-                    <p className="text-xs leading-relaxed text-slate-700">
-                      {action.recommendation}
-                    </p>
+                  {/* Recommendation */}
+                  <div className="rounded-xl p-4 mb-5 bg-white/60 border border-slate-200">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-violet-600" />
+                      <p className="text-xs leading-relaxed text-slate-700">{action.recommendation}</p>
+                    </div>
                   </div>
-                </div>
 
-                {/* CTA button */}
-                <button
-                  onClick={() => setSelectedAction(action)}
-                  className={`w-full py-3 rounded-xl text-white transition-all duration-300 shadow-md hover:shadow-lg font-medium text-sm bg-gradient-to-r ${colorScheme.topBar} hover:opacity-90`}
-                >
-                  View Details & Source Contents
-                </button>
+                  {/* CTA button */}
+                  <button
+                    onClick={() => setSelectedAction(action)}
+                    className={`w-full py-3 rounded-xl text-white transition-all duration-300 shadow-md hover:shadow-lg font-medium text-sm bg-gradient-to-r ${colorScheme.topBar} hover:opacity-90`}
+                  >
+                    View Details & Source Contents
+                  </button>
+                </div>
               </div>
             </div>
           );

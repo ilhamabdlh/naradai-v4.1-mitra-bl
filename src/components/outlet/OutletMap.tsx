@@ -182,7 +182,7 @@ export function OutletMap() {
   const good     = outlets.filter((o) => o.status === "good");
 
   return (
-    <div id="outlet-map" className="space-y-5">
+    <div id="outlet-map" className="space-y-5" style={{ isolation: "isolate", position: "relative", zIndex: 0 }}>
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-cyan-100 flex items-center justify-center">
           <MapIcon className="w-5 h-5 text-violet-600" />
@@ -193,11 +193,11 @@ export function OutletMap() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5" style={{ isolation: "isolate" }}>
         {/* Map */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 relative overflow-hidden">
+        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 relative overflow-hidden" style={{ isolation: "isolate" }}>
           <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[radial-gradient(#4f46e5_1px,transparent_1px)] [background-size:24px_24px]" />
-          <div className="relative" style={{ height: MAP_HEIGHT }}>
+          <div className="relative z-0" style={{ height: MAP_HEIGHT }}>
             <OutletMapLeaflet outlets={outlets} />
           </div>
           {/* Legend */}

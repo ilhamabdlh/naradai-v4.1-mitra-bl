@@ -23,10 +23,10 @@ export function RisksOpportunities() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         {/* Risks Column */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-red-600" />
             <h3 className="text-slate-900">Risks</h3>
             <span className="px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs">
@@ -41,8 +41,8 @@ export function RisksOpportunities() {
         </div>
 
         {/* Opportunities Column */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-emerald-600" />
             <h3 className="text-slate-900">Opportunities</h3>
             <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs">

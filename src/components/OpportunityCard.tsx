@@ -108,7 +108,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
   const TrendIcon = opportunity.trend === "increasing" ? TrendingUp : opportunity.trend === "decreasing" ? TrendingDown : Minus;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-all">
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-all h-full">
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
@@ -216,9 +216,6 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
             </div>
           </div>
 
-          <button className="w-full py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:opacity-90 transition-opacity">
-            Create Action Plan
-          </button>
         </div>
       )}
     </div>

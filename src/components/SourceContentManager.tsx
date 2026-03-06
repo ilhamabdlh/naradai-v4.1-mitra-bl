@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Database,
   BarChart3,
@@ -2558,17 +2558,51 @@ function KOLMatrixEditor({
   );
 }
 
+const ALL_PLATFORMS = ["twitter", "instagram", "facebook", "tiktok", "googlemaps", "youtube", "reddit", "googleplay", "appstore"] as const;
+
+function getPlatformValue(val: ShareOfPlatformRow[string]): number {
+  if (val === undefined || val === null) return 0;
+  if (Array.isArray(val)) return Number(val[0]) || 0;
+  return Number(val) || 0;
+}
+
 function ShareOfPlatformEditor({ items, onUpdate }: { items: ShareOfPlatformRow[]; onUpdate: (v: ShareOfPlatformRow[]) => void }) {
   const list = items ?? [];
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [adding, setAdding] = useState(false);
-  const platforms = ["twitter", "youtube", "reddit", "instagram", "facebook", "tiktok"] as const;
-  const add = () => onUpdate([...list, { date: "", twitter: 0, youtube: 0, reddit: 0, instagram: 0, facebook: 0, tiktok: 0 }]);
-  const updateRow = (idx: number, u: Partial<ShareOfPlatformRow>) => onUpdate(list.map((r, i) => (i === idx ? { ...r, ...u } : r)));
+
+  // Deteksi platform yang aktif dari data (hanya kolom yang punya nilai > 0 di minimal 1 baris)
+  const activePlatforms = useMemo((): string[] => {
+    if (list.length === 0) return ["twitter", "instagram", "facebook", "tiktok"];
+    const found = new Set<string>();
+    list.forEach((row) => {
+      Object.keys(row).forEach((k) => {
+        if (k !== "date" && getPlatformValue(row[k]) > 0) found.add(k);
+      });
+    });
+    // Jika tidak ada yang terdeteksi, fallback ke semua platform yang ada di baris pertama
+    if (found.size === 0) {
+      Object.keys(list[0]).filter((k) => k !== "date").forEach((k) => found.add(k));
+    }
+    // Urutkan sesuai urutan ALL_PLATFORMS, sisanya di belakang
+    const ordered: string[] = [];
+    ALL_PLATFORMS.forEach((p) => { if (found.has(p)) ordered.push(p); });
+    found.forEach((p) => { if (!ordered.includes(p)) ordered.push(p); });
+    return ordered;
+  }, [list]);
+
+  const emptyRow = (): ShareOfPlatformRow => {
+    const row: ShareOfPlatformRow = { date: "" };
+    activePlatforms.forEach((p) => { row[p] = 0; });
+    return row;
+  };
+
+  const updateRow = (idx: number, u: Partial<ShareOfPlatformRow>) =>
+    onUpdate(list.map((r, i) => (i === idx ? { ...r, ...u } : r)));
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={add} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 hover:opacity-90">
+        <Button onClick={() => onUpdate([...list, emptyRow()])} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 hover:opacity-90">
           <Plus className="w-4 h-4 mr-2" />
           Tambah baris
         </Button>
@@ -2578,8 +2612,8 @@ function ShareOfPlatformEditor({ items, onUpdate }: { items: ShareOfPlatformRow[
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               <th className="px-4 py-3 text-left font-semibold text-slate-700">Date</th>
-              {platforms.map((p) => (
-                <th key={p} className="px-4 py-3 text-left font-semibold text-slate-700">{p}</th>
+              {activePlatforms.map((p) => (
+                <th key={p} className="px-4 py-3 text-left font-semibold text-slate-700 capitalize">{p}</th>
               ))}
               <th className="px-4 py-3 text-right font-semibold text-slate-700">Aksi</th>
             </tr>
@@ -2588,8 +2622,8 @@ function ShareOfPlatformEditor({ items, onUpdate }: { items: ShareOfPlatformRow[
             {list.map((row, idx) => (
               <tr key={idx} className="hover:bg-slate-50">
                 <td className="px-4 py-3">{row.date}</td>
-                {platforms.map((p) => (
-                  <td key={p} className="px-4 py-3">{row[p].toLocaleString()}</td>
+                {activePlatforms.map((p) => (
+                  <td key={p} className="px-4 py-3">{getPlatformValue(row[p]).toLocaleString()}</td>
                 ))}
                 <td className="px-4 py-3 text-right">
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditIdx(idx)}><Pencil className="w-3.5 h-3.5" /></Button>
@@ -2601,16 +2635,32 @@ function ShareOfPlatformEditor({ items, onUpdate }: { items: ShareOfPlatformRow[
         </table>
       </div>
       {editIdx !== null && list[editIdx] && (
-        <Dialog open onOpenChange={(o) => !o && (setEditIdx(null), setAdding(false))}>
+        <Dialog open onOpenChange={(o) => !o && setEditIdx(null)}>
           <DialogContent className="rounded-2xl sm:max-w-md">
             <DialogHeader><DialogTitle>Edit baris</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <Input placeholder="Date" value={list[editIdx].date} onChange={(e) => updateRow(editIdx, { date: e.target.value })} className="rounded-xl" />
-              {platforms.map((p) => (
-                <Input key={p} type="number" placeholder={p} value={list[editIdx][p]} onChange={(e) => updateRow(editIdx, { [p]: Number(e.target.value) || 0 })} className="rounded-xl" />
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              <Input
+                placeholder="Date (e.g. Mar 01)"
+                value={list[editIdx].date}
+                onChange={(e) => updateRow(editIdx, { date: e.target.value })}
+                className="rounded-xl"
+              />
+              {activePlatforms.map((p) => (
+                <div key={p} className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600 capitalize">{p}</label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={getPlatformValue(list[editIdx][p])}
+                    onChange={(e) => updateRow(editIdx, { [p]: Number(e.target.value) || 0 })}
+                    className="rounded-xl"
+                  />
+                </div>
               ))}
             </div>
-            <DialogFooter><Button variant="outline" onClick={() => { setEditIdx(null); setAdding(false); }}>Tutup</Button></DialogFooter>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditIdx(null)}>Tutup</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
@@ -3057,8 +3107,6 @@ function CompetitiveMatrixEditor({
   );
 }
 
-const HEATMAP_COLS = ["yourBrand", "competitorA", "competitorB", "competitorC", "competitorD"] as const;
-
 function CompetitiveHeatmapEditor({
   title,
   items,
@@ -3098,13 +3146,20 @@ function CompetitiveHeatmapEditor({
     return 0;
   };
   
-  const add = () => onUpdate([...list, { issue: "", yourBrand: 0, competitorA: 0, competitorB: 0, competitorC: 0, competitorD: 0 }]);
-  const updateRow = (idx: number, u: Partial<CompetitiveHeatmapRow>) => onUpdate(list.map((r, i) => (i === idx ? { ...r, ...u } : r)));
+  const emptyHeatmapRow = (): CompetitiveHeatmapRow => {
+    const row: CompetitiveHeatmapRow = { issue: "" };
+    allBrands.forEach((b) => { row[b] = 0; });
+    return row;
+  };
+
+  const updateRow = (idx: number, u: Partial<CompetitiveHeatmapRow>) =>
+    onUpdate(list.map((r, i) => (i === idx ? { ...r, ...u } : r)));
+
   return (
     <div className="space-y-4">
       <h4 className="text-sm font-semibold text-slate-800">{title}</h4>
       <div className="flex justify-end">
-        <Button onClick={add} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 hover:opacity-90">
+        <Button onClick={() => onUpdate([...list, emptyHeatmapRow()])} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 hover:opacity-90">
           <Plus className="w-4 h-4 mr-2" />
           Tambah baris
         </Button>
@@ -3145,18 +3200,37 @@ function CompetitiveHeatmapEditor({
         <Dialog open onOpenChange={(o) => !o && (setEditIdx(null), setAdding(false))}>
           <DialogContent className="rounded-2xl sm:max-w-md">
             <DialogHeader><DialogTitle>Edit baris ({valueLabel})</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <Input placeholder="Issue" value={list[editIdx].issue} onChange={(e) => updateRow(editIdx, { issue: e.target.value })} className="rounded-xl" />
-              {HEATMAP_COLS.map((c) => {
-                const brandName = brandLabels 
-                  ? (c === "yourBrand" ? brandLabels.yourBrand : c === "competitorA" ? brandLabels.competitorA : c === "competitorB" ? brandLabels.competitorB : c === "competitorC" ? brandLabels.competitorC : brandLabels.competitorD)
-                  : c;
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-600">Issue</label>
+                <Input
+                  placeholder="Issue"
+                  value={list[editIdx].issue}
+                  onChange={(e) => updateRow(editIdx, { issue: e.target.value })}
+                  className="rounded-xl"
+                />
+              </div>
+              {allBrands.map((brandName) => {
+                const rawVal = list[editIdx][brandName];
+                const numVal = typeof rawVal === "number" ? rawVal : typeof rawVal === "string" ? parseFloat(rawVal) || 0 : 0;
                 return (
-                  <Input key={c} type="number" step={valueLabel.includes("Score") ? 0.01 : 1} placeholder={brandName} value={list[editIdx][c]} onChange={(e) => updateRow(editIdx, { [c]: valueLabel.includes("Score") ? Number(e.target.value) || 0 : Number(e.target.value) || 0 })} className="rounded-xl" />
+                  <div key={brandName} className="space-y-1">
+                    <label className="text-xs font-medium text-slate-600">{brandName}</label>
+                    <Input
+                      type="number"
+                      step={valueLabel.includes("Score") ? 1 : 1}
+                      placeholder="0"
+                      value={numVal}
+                      onChange={(e) => updateRow(editIdx, { [brandName]: Number(e.target.value) || 0 })}
+                      className="rounded-xl"
+                    />
+                  </div>
                 );
               })}
             </div>
-            <DialogFooter><Button variant="outline" onClick={() => { setEditIdx(null); setAdding(false); }}>Tutup</Button></DialogFooter>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setEditIdx(null); setAdding(false); }}>Tutup</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
@@ -3167,15 +3241,39 @@ function CompetitiveHeatmapEditor({
 function ShareOfVoiceEditor({ items, onUpdate, brandLabels }: { items: ShareOfVoiceRow[]; onUpdate: (v: ShareOfVoiceRow[]) => void; brandLabels?: CompetitiveBrandLabels | undefined }) {
   const list = items ?? [];
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const cols = ["yourBrand", "competitorA", "competitorB", "competitorC", "competitorD"] as const;
-  const labels = brandLabels ? [brandLabels.yourBrand, brandLabels.competitorA, brandLabels.competitorB, brandLabels.competitorC, brandLabels.competitorD] : ["Your Brand", "Competitor A", "Competitor B", "Competitor C", "Competitor D"];
-  const add = () => onUpdate([...list, { date: "", yourBrand: 0, competitorA: 0, competitorB: 0, competitorC: 0, competitorD: 0 }]);
-  const updateRow = (idx: number, u: Partial<ShareOfVoiceRow>) => onUpdate(list.map((r, i) => (i === idx ? { ...r, ...u } : r)));
+
+  // Deteksi kolom brand secara dinamis dari data atau brandLabels
+  const brandCols: string[] = useMemo(() => {
+    if (list.length > 0) {
+      return Object.keys(list[0]).filter((k) => k !== "date");
+    }
+    if (brandLabels) {
+      if (brandLabels.competitors?.length) return [brandLabels.yourBrand, ...brandLabels.competitors];
+      return [
+        brandLabels.yourBrand,
+        brandLabels.competitorA,
+        brandLabels.competitorB,
+        brandLabels.competitorC,
+        brandLabels.competitorD,
+      ].filter(Boolean) as string[];
+    }
+    return ["yourBrand", "competitorA", "competitorB", "competitorC", "competitorD"];
+  }, [list, brandLabels]);
+
+  const emptyRow = (): ShareOfVoiceRow => {
+    const row: ShareOfVoiceRow = { date: "" };
+    brandCols.forEach((c) => { row[c] = 0; });
+    return row;
+  };
+
+  const updateRow = (idx: number, u: Partial<ShareOfVoiceRow>) =>
+    onUpdate(list.map((r, i) => (i === idx ? { ...r, ...u } : r)));
+
   return (
     <div className="space-y-4">
       <h4 className="text-sm font-semibold text-slate-800">Share of Voice (per date)</h4>
       <div className="flex justify-end">
-        <Button onClick={add} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 hover:opacity-90">
+        <Button onClick={() => onUpdate([...list, emptyRow()])} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-500 hover:opacity-90">
           <Plus className="w-4 h-4 mr-2" />
           Tambah baris
         </Button>
@@ -3185,8 +3283,8 @@ function ShareOfVoiceEditor({ items, onUpdate, brandLabels }: { items: ShareOfVo
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               <th className="px-4 py-3 text-left font-semibold text-slate-700">Date</th>
-              {labels.map((l, i) => (
-                <th key={i} className="px-4 py-3 text-left font-semibold text-slate-700">{l}</th>
+              {brandCols.map((c) => (
+                <th key={c} className="px-4 py-3 text-left font-semibold text-slate-700">{c}</th>
               ))}
               <th className="px-4 py-3 text-right font-semibold text-slate-700">Aksi</th>
             </tr>
@@ -3195,8 +3293,8 @@ function ShareOfVoiceEditor({ items, onUpdate, brandLabels }: { items: ShareOfVo
             {list.map((row, idx) => (
               <tr key={idx} className="hover:bg-slate-50">
                 <td className="px-4 py-3">{row.date}</td>
-                {cols.map((c) => (
-                  <td key={c} className="px-4 py-3">{row[c].toLocaleString()}</td>
+                {brandCols.map((c) => (
+                  <td key={c} className="px-4 py-3">{Number(row[c] ?? 0).toLocaleString()}</td>
                 ))}
                 <td className="px-4 py-3 text-right">
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditIdx(idx)}><Pencil className="w-3.5 h-3.5" /></Button>
@@ -3211,10 +3309,19 @@ function ShareOfVoiceEditor({ items, onUpdate, brandLabels }: { items: ShareOfVo
         <Dialog open onOpenChange={(o) => !o && setEditIdx(null)}>
           <DialogContent className="rounded-2xl sm:max-w-md">
             <DialogHeader><DialogTitle>Edit baris</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <Input placeholder="Date" value={list[editIdx].date} onChange={(e) => updateRow(editIdx, { date: e.target.value })} className="rounded-xl" />
-              {cols.map((c) => (
-                <Input key={c} type="number" placeholder={c} value={list[editIdx][c]} onChange={(e) => updateRow(editIdx, { [c]: Number(e.target.value) || 0 })} className="rounded-xl" />
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              <Input placeholder="Date (e.g. Mar 01)" value={list[editIdx].date} onChange={(e) => updateRow(editIdx, { date: e.target.value })} className="rounded-xl" />
+              {brandCols.map((c) => (
+                <div key={c} className="space-y-1">
+                  <label className="text-xs font-medium text-slate-600">{c}</label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={Number(list[editIdx][c] ?? 0)}
+                    onChange={(e) => updateRow(editIdx, { [c]: Number(e.target.value) || 0 })}
+                    className="rounded-xl"
+                  />
+                </div>
               ))}
             </div>
             <DialogFooter><Button variant="outline" onClick={() => setEditIdx(null)}>Tutup</Button></DialogFooter>

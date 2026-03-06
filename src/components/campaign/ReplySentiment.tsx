@@ -78,6 +78,13 @@ export function ReplySentiment() {
           {topicClusters.map((t) => {
             const isOpen = expanded === t.id;
             const sharePct = totalReplies > 0 ? Math.round((t.totalReplies / totalReplies) * 100) : 0;
+
+            // Normalise to within-topic percentages (stored values may be % of grand total)
+            const rawSum = t.positive + t.neutral + t.negative;
+            const posWithin  = rawSum > 0 ? Math.round((t.positive / rawSum) * 100) : 0;
+            const neuWithin  = rawSum > 0 ? Math.round((t.neutral  / rawSum) * 100) : 0;
+            const negWithin  = 100 - posWithin - neuWithin;
+
             return (
               <div key={t.id}>
                 <button
@@ -93,11 +100,11 @@ export function ReplySentiment() {
                           {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                         </div>
                       </div>
-                      <SentimentBar positive={t.positive} neutral={t.neutral} negative={t.negative} />
+                      <SentimentBar positive={posWithin} neutral={neuWithin} negative={negWithin} />
                       <div className="flex gap-4 mt-1.5 text-xs">
-                        <span className="text-emerald-600 font-medium">{t.positive}% pos</span>
-                        <span className="text-slate-400">{t.neutral}% neutral</span>
-                        <span className="text-red-500 font-medium">{t.negative}% neg</span>
+                        <span className="text-emerald-600 font-medium">{posWithin}% pos</span>
+                        <span className="text-slate-400">{neuWithin}% neutral</span>
+                        <span className="text-red-500 font-medium">{negWithin}% neg</span>
                       </div>
                     </div>
                   </div>

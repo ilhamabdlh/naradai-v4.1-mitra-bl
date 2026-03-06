@@ -122,24 +122,43 @@ export function OutletReviewSentiment() {
           {outletSentiment.length > 0 && (
             <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-6 space-y-4">
               <h3 className="font-semibold text-slate-800 text-sm">Sentiment by Outlet</h3>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {outletSentiment.map((o) => (
                   <div key={o.id} className="flex items-center gap-3">
-                    <span className="w-44 text-xs text-slate-600 truncate text-right shrink-0">{o.name}</span>
-                    <div className="flex-1 flex h-2 rounded-full overflow-hidden">
-                      <div className="bg-emerald-400" style={{ width: `${o.positive}%` }} />
-                      <div className="bg-slate-200" style={{ width: `${o.neutral}%` }} />
-                      <div className="bg-red-400" style={{ width: `${o.negative}%` }} />
-                    </div>
-                    <div className="w-24 flex gap-2 text-[10px] font-semibold shrink-0">
-                      <span className="text-emerald-600">{o.positive}%</span>
-                      <span className="text-red-500">{o.negative}%</span>
-                    </div>
+                    <span className="w-28 text-xs text-slate-600 truncate text-right shrink-0">{o.name}</span>
+                    {o.noNewReviews ? (
+                      <>
+                        <div className="flex-1 flex h-2 rounded-full overflow-hidden bg-slate-100">
+                          <div className="w-full bg-slate-100 rounded-full" />
+                        </div>
+                        <div className="w-28 flex items-center shrink-0">
+                          <span className="text-[10px] text-slate-400 italic">No new reviews</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-1 flex h-2 rounded-full overflow-hidden">
+                          <div className="bg-emerald-400" style={{ width: `${o.positive}%` }} />
+                          <div className="bg-slate-200" style={{ width: `${o.neutral}%` }} />
+                          <div className="bg-red-400" style={{ width: `${o.negative}%` }} />
+                        </div>
+                        <div className="w-28 flex gap-2 text-[10px] font-semibold shrink-0">
+                          <span className="text-emerald-600">{o.positive}%</span>
+                          <span className="text-slate-400">{o.neutral}%</span>
+                          <span className="text-red-500">{o.negative}%</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
               <div className="flex items-center gap-4 pt-1">
-                {[{ color: "bg-emerald-400", label: "Positive" }, { color: "bg-slate-200", label: "Neutral" }, { color: "bg-red-400", label: "Negative" }].map((l) => (
+                {[
+                  { color: "bg-emerald-400", label: "Positive" },
+                  { color: "bg-slate-200",   label: "Neutral"  },
+                  { color: "bg-red-400",     label: "Negative" },
+                  { color: "bg-slate-100 border border-slate-200", label: "No new reviews" },
+                ].map((l) => (
                   <div key={l.label} className="flex items-center gap-1.5">
                     <div className={`w-3 h-1.5 rounded-full ${l.color}`} />
                     <span className="text-xs text-slate-500">{l.label}</span>

@@ -6,13 +6,13 @@ import type { ShareOfVoiceRow } from "@/lib/dashboard-content-types";
 type Granularity = "daily" | "weekly" | "monthly";
 
 const defaultDaily: ShareOfVoiceRow[] = [
-  { date: "Jan 1", yourBrand: 250, competitorA: 210, competitorB: 180, competitorC: 200, competitorD: 190 },
+  { date: "Jan 1",  yourBrand: 250, competitorA: 210, competitorB: 180, competitorC: 200, competitorD: 190 },
   { date: "Jan 15", yourBrand: 288, competitorA: 248, competitorB: 208, competitorC: 226, competitorD: 216 },
   { date: "Jan 30", yourBrand: 385, competitorA: 282, competitorB: 250, competitorC: 262, competitorD: 252 },
 ];
 
 const defaultWeekly: ShareOfVoiceRow[] = [
-  { date: "Jan 1", yourBrand: 1800, competitorA: 1500, competitorB: 1300, competitorC: 1400, competitorD: 1350 },
+  { date: "Jan 1",  yourBrand: 1800, competitorA: 1500, competitorB: 1300, competitorC: 1400, competitorD: 1350 },
   { date: "Jan 15", yourBrand: 1950, competitorA: 1700, competitorB: 1350, competitorC: 1550, competitorD: 1480 },
   { date: "Jan 29", yourBrand: 2500, competitorA: 1750, competitorB: 1450, competitorC: 1650, competitorD: 1580 },
 ];
@@ -30,28 +30,7 @@ const dataByGranularity: Record<Granularity, ShareOfVoiceRow[]> = {
   monthly: defaultMonthly,
 };
 
-const LABELS: Record<string, string> = {
-  yourBrand: "Your Brand",
-  competitorA: "Competitor A",
-  competitorB: "Competitor B",
-  competitorC: "Competitor C",
-  competitorD: "Competitor D",
-};
-
-const COLORS = ["#8b5cf6", "#06b6d4", "#f59e0b", "#10b981", "#f43f5e"];
-
-const KEYS = ["yourBrand", "competitorA", "competitorB", "competitorC", "competitorD"] as const;
-
-function rowToPieData(row: ShareOfVoiceRow): { name: string; value: number; key: string }[] {
-  let total = 0;
-  const items: { name: string; value: number; key: string }[] = [];
-  for (const key of KEYS) {
-    const v = row[key] ?? 0;
-    total += v;
-    items.push({ name: LABELS[key], value: v, key });
-  }
-  return items.filter((d) => d.value > 0);
-}
+const DEFAULT_COLORS = ["#8b5cf6", "#06b6d4", "#f59e0b", "#10b981", "#f43f5e", "#ec4899", "#3b82f6", "#84cc16", "#f97316"];
 
 export function ShareOfVoiceWidget() {
   const content = useDashboardContent();
@@ -59,14 +38,26 @@ export function ShareOfVoiceWidget() {
   const storeRows = content?.competitiveShareOfVoice ?? [];
   const rows = storeRows.length ? storeRows : dataByGranularity[granularity];
   const latestRow = rows[rows.length - 1] ?? rows[0];
-  const pieData = useMemo(() => (latestRow ? rowToPieData(latestRow) : []), [latestRow]);
-  const totalVoice = useMemo(
-    () => (latestRow ? KEYS.reduce((s, k) => s + (latestRow[k] ?? 0), 0) : 0),
-    [latestRow]
-  );
+
+  // Deteksi brand keys secara dinamis dari data
+  const brandKeys = useMemo(() => {
+    if (!latestRow) return [];
+    return Object.keys(latestRow).filter((k) => k !== "date");
+  }, [latestRow]);
+
+  const yourBrandKey = brandKeys[0] ?? "yourBrand";
+
+  const pieData = useMemo(() => {
+    if (!latestRow) return [];
+    return brandKeys
+      .map((key) => ({ name: key, value: Number(latestRow[key]) || 0, key }))
+      .filter((d) => d.value > 0);
+  }, [latestRow, brandKeys]);
+
+  const totalVoice = useMemo(() => pieData.reduce((s, d) => s + d.value, 0), [pieData]);
   const brandShare = useMemo(
-    () => (totalVoice > 0 && latestRow ? ((latestRow.yourBrand / totalVoice) * 100).toFixed(1) : "0"),
-    [latestRow, totalVoice]
+    () => (totalVoice > 0 && latestRow ? ((Number(latestRow[yourBrandKey]) / totalVoice) * 100).toFixed(1) : "0"),
+    [latestRow, totalVoice, yourBrandKey]
   );
 
   return (
@@ -108,11 +99,10 @@ export function ShareOfVoiceWidget() {
                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
               >
                 {pieData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  <Cell key={i} fill={DEFAULT_COLORS[i % DEFAULT_COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => [value.toLocaleString(), "Conversations"]}
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const total = payload.reduce((s, p) => s + (p.value as number), 0);

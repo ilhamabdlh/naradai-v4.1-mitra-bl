@@ -120,10 +120,16 @@ export function formatChartDateAxisLabel(dateStr: string, dateStrings?: string[]
   return `${month} ${day}`;
 }
 
+/**
+ * Returns the Sunday of the week containing `d`, as a local "YYYY-MM-DD" string.
+ * Uses Sunday as week-start so data within Sun–Sat stays in one bucket.
+ * Formats using local date components (not UTC) to avoid timezone-shift bugs.
+ */
 export function getWeekStart(d: Date): string {
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  return monday.toISOString().slice(0, 10);
+  const sunday = new Date(d);
+  sunday.setDate(d.getDate() - d.getDay()); // d.getDay() === 0 means it's already Sunday
+  const year  = sunday.getFullYear();
+  const month = String(sunday.getMonth() + 1).padStart(2, "0");
+  const day   = String(sunday.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

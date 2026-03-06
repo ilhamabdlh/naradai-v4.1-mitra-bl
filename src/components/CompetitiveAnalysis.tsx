@@ -293,6 +293,9 @@ export function CompetitiveAnalysis() {
     return 0;
   };
 
+  // Normalise sentiment value ke skala 0–1 (data bisa disimpan sebagai 0–100 atau 0–1)
+  const normalizeSentiment = (v: number): number => (v > 1 ? v / 100 : v);
+
   const companies = heatmapBrands;
 
   type Granularity = "daily" | "weekly" | "monthly";
@@ -364,54 +367,42 @@ export function CompetitiveAnalysis() {
   const shareOfVoiceFromContent = content?.competitiveShareOfVoice ?? [];
   const shareOfVoiceData = shareOfVoiceFromContent.length > 0 ? shareOfVoiceFromContent : sovDataByGranularity[sovGranularity];
   
-  // Generate brand keys for Share of Voice - only 4 brands (competitor D excluded from chart)
+  // Deteksi brand keys dinamis dari data SOV (semua key selain "date")
   const sovBrandKeys = useMemo(() => {
-    if (brandLabels) {
-      return [brandLabels.yourBrand, brandLabels.competitorA, brandLabels.competitorB, brandLabels.competitorC];
+    if (shareOfVoiceFromContent.length > 0) {
+      const first = shareOfVoiceFromContent[0];
+      return Object.keys(first).filter((k) => k !== "date");
     }
-    return ["Your Brand", "Competitor A", "Competitor B", "Competitor C"];
-  }, [brandLabels]);
-  
-  // Generate labels mapping for Share of Voice (competitor D excluded)
+    // Fallback ke brandLabels lama
+    if (brandLabels) {
+      const keys = [brandLabels.yourBrand];
+      if (brandLabels.competitors?.length) keys.push(...brandLabels.competitors);
+      else {
+        if (brandLabels.competitorA) keys.push(brandLabels.competitorA);
+        if (brandLabels.competitorB) keys.push(brandLabels.competitorB);
+        if (brandLabels.competitorC) keys.push(brandLabels.competitorC);
+        if (brandLabels.competitorD) keys.push(brandLabels.competitorD);
+      }
+      return keys;
+    }
+    return ["yourBrand", "competitorA", "competitorB", "competitorC"];
+  }, [shareOfVoiceFromContent, brandLabels]);
+
+  // Labels = identity (brand name langsung sebagai key)
   const sovLabels: Record<string, string> = useMemo(() => {
-    const labels: Record<string, string> = {};
-    if (brandLabels) {
-      labels.yourBrand = brandLabels.yourBrand;
-      labels.competitorA = brandLabels.competitorA;
-      labels.competitorB = brandLabels.competitorB;
-      labels.competitorC = brandLabels.competitorC;
-    } else {
-      labels.yourBrand = "Your Brand";
-      labels.competitorA = "Competitor A";
-      labels.competitorB = "Competitor B";
-      labels.competitorC = "Competitor C";
-    }
-    return labels;
-  }, [brandLabels]);
-  
-  // Generate colors for brands - use colors from competitiveMatrixItems if available
+    return Object.fromEntries(sovBrandKeys.map((k) => [k, k]));
+  }, [sovBrandKeys]);
+
+  // Warna per brand — ambil dari competitiveMatrixItems jika ada
+  const DEFAULT_SOV_COLORS = ["#8b5cf6","#06b6d4","#f59e0b","#10b981","#f43f5e","#ec4899","#3b82f6","#84cc16","#f97316"];
   const brandColors = useMemo(() => {
-    const colors: Record<string, string> = {
-      yourBrand: "#8b5cf6",
-      competitorA: "#06b6d4",
-      competitorB: "#f59e0b",
-      competitorC: "#10b981",
-      competitorD: "#f43f5e",
-    };
-    
-    // Map colors from competitiveMatrixItems if brandLabels match
-    if (competitiveMatrixItems.length > 0 && brandLabels) {
-      competitiveMatrixItems.forEach((item) => {
-        if (item.name === brandLabels.yourBrand) colors.yourBrand = item.color;
-        else if (item.name === brandLabels.competitorA) colors.competitorA = item.color;
-        else if (item.name === brandLabels.competitorB) colors.competitorB = item.color;
-        else if (item.name === brandLabels.competitorC) colors.competitorC = item.color;
-        else if (item.name === brandLabels.competitorD) colors.competitorD = item.color;
-      });
-    }
-    
-    return colors;
-  }, [competitiveMatrixItems, brandLabels]);
+    const colorMap: Record<string, string> = {};
+    const matrixColorByName = Object.fromEntries(competitiveMatrixItems.map((m) => [m.name, m.color]));
+    sovBrandKeys.forEach((key, i) => {
+      colorMap[key] = matrixColorByName[key] ?? DEFAULT_SOV_COLORS[i % DEFAULT_SOV_COLORS.length];
+    });
+    return colorMap;
+  }, [sovBrandKeys, competitiveMatrixItems]);
 
   // Function to get sentiment color (red for negative, green for positive)
   const getSentimentColor = (value: number): string => {
@@ -852,16 +843,17 @@ export function CompetitiveAnalysis() {
                       </td>
                       {companies.map((company, colIdx) => {
                         const value = getBrandValue(row, company);
+                        const normalized = normalizeSentiment(value);
                         return (
                           <td
                             key={colIdx}
                             className="p-3 text-xs font-semibold text-center border border-slate-200 whitespace-nowrap"
                             style={{
-                              backgroundColor: getSentimentColor(value),
-                              color: getTextColor(value),
+                              backgroundColor: getSentimentColor(normalized),
+                              color: getTextColor(normalized),
                             }}
                           >
-                            {value.toFixed(2)}
+                            {value > 1 ? value.toFixed(2) : (value * 100).toFixed(2)}
                           </td>
                         );
                       })}
@@ -1093,10 +1085,15 @@ export function CompetitiveAnalysis() {
               iconSize={8}
               wrapperStyle={{ paddingTop: 8 }}
             />
-            <Bar dataKey="yourBrand" stackId="a" fill={brandColors.yourBrand} radius={[0, 0, 0, 0]} />
-            <Bar dataKey="competitorA" stackId="a" fill={brandColors.competitorA} />
-            <Bar dataKey="competitorB" stackId="a" fill={brandColors.competitorB} />
-            <Bar dataKey="competitorC" stackId="a" fill={brandColors.competitorC} radius={[4, 4, 0, 0]} />
+            {sovBrandKeys.map((key, i) => (
+              <Bar
+                key={key}
+                dataKey={key}
+                stackId="a"
+                fill={brandColors[key]}
+                radius={i === sovBrandKeys.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+              />
+            ))}
           </BarChart>
         </ResponsiveContainer>
       </div>

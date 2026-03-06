@@ -216,6 +216,8 @@ export interface ShareOfPlatformRow {
   appstore?: ShareOfPlatformValue;
   youtube?: ShareOfPlatformValue;
   reddit?: ShareOfPlatformValue;
+  googlemaps?: ShareOfPlatformValue;
+  [platform: string]: ShareOfPlatformValue | string | undefined;
 }
 
 export interface CompetitiveMatrixItem {
@@ -253,11 +255,7 @@ export type CompetitiveHeatmapRow = { issue: string } & Record<string, number | 
 
 export interface ShareOfVoiceRow {
   date: string;
-  yourBrand: number;
-  competitorA: number;
-  competitorB: number;
-  competitorC: number;
-  competitorD: number;
+  [brand: string]: number | string;
 }
 
 /** Satu item raw content untuk tab Source Contents (Social / Reviews / News). */
@@ -278,10 +276,12 @@ export interface RawSourceContentItem {
 
 export interface CompetitiveBrandLabels {
   yourBrand: string;
-  competitorA: string;
-  competitorB: string;
-  competitorC: string;
-  competitorD: string;
+  competitorA?: string;
+  competitorB?: string;
+  competitorC?: string;
+  competitorD?: string;
+  /** Daftar nama kompetitor secara dinamis (untuk instance dengan banyak brand) */
+  competitors?: string[];
 }
 
 export type FeatureVisibilityKey =
@@ -516,6 +516,7 @@ export interface OutletSentimentByOutletItem {
   positive: number;
   neutral: number;
   negative: number;
+  noNewReviews?: boolean;
 }
 
 export interface OutletTopicItem {
