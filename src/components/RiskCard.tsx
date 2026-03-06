@@ -154,12 +154,11 @@ export function RiskCard({ risk }: RiskCardProps) {
             <div key={idx} className="bg-slate-50 rounded-lg p-2.5 border border-slate-200">
               <div className="text-xs text-slate-500 mb-1">{indicator.label}</div>
               <div className="flex items-center gap-1">
-                <span className="text-sm text-slate-900">{typeof indicator.value === 'number' && indicator.value < 1 && indicator.value > -1 ? indicator.value.toFixed(2) : indicator.value}</span>
-                {indicator.change !== 0 && (
-                  <span className={`text-xs ${indicator.change > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                    {indicator.change > 0 ? '+' : ''}{indicator.change}%
-                  </span>
-                )}
+                <span className="text-sm text-slate-900">
+                  {typeof indicator.value === "number" && indicator.value < 1 && indicator.value > -1
+                    ? indicator.value.toFixed(2)
+                    : indicator.value}
+                </span>
               </div>
             </div>
           ))}

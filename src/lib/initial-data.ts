@@ -4258,7 +4258,7 @@ function buildBeningsInitial(d: DashboardContentStore): DashboardContentStore {
         category: "Customer Service",
         quadrantColor: "red",
         relatedIssues: ["Long Waiting Time", "Staff Friendliness"],
-        metrics: { mentions: 15, sentiment: "Negative (20.0%)", trend: "Increasing" },
+        metrics: { mentions: 15, sentiment: "20.0%", trend: "Increasing" },
         sourceUsername: "Anonymous",
         sourceContent:
           "Alhasil nunggu lama treatment yg lain padahal dokter nya ada 3 gk bisa cepat pelayanan nya",
@@ -4276,28 +4276,10 @@ function buildBeningsInitial(d: DashboardContentStore): DashboardContentStore {
         category: "Operations",
         quadrantColor: "orange",
         relatedIssues: ["Facility Discomfort", "Technical Issues"],
-        metrics: { mentions: 5, sentiment: "Critical (0.2)", trend: "Stable" },
+        metrics: { mentions: 5, sentiment: "20.0%", trend: "Stable" },
         sourceUsername: "Anonymous",
         sourceContent:
           "masak iya istri saya tretmen laser ruangan ac tidak nyala wajah sudah panas juga sangat buruk lah intinya !!!",
-      },
-      {
-        id: "3",
-        priority: "medium",
-        title: "Cleanse Social Media Keyword Tracking (Twitter/X)",
-        description:
-          "Brand sentiment analysis is currently diluted by non-brand mentions on X (Twitter), where 'Bening' is used for food containers, screen protectors, and generic adjectives. This noise accounts for ~60% of brand-related mentions.",
-        impact: "Medium",
-        effort: "Low",
-        recommendation:
-          "Refine boolean search queries to exclude generic keywords and focus strictly on '@BeningsClinic' or 'treatment Bening'.",
-        category: "Marketing Analytics",
-        quadrantColor: "blue",
-        relatedIssues: ["Data Noise", "Marketing ROI"],
-        metrics: { mentions: 140, sentiment: "Neutral (0.5)", trend: "High Volume" },
-        sourceUsername: "Marketplace Auto-Listing",
-        sourceContent:
-          "Temukan Eatkit Toples Kedap Udara Bening Cereal Penyimpanan Kontainer Food Storage...",
       },
     ],
     outletSatisfaction: [],
@@ -4360,8 +4342,98 @@ function buildBeningsInitial(d: DashboardContentStore): DashboardContentStore {
         ],
       },
     ],
-    competitiveIssues: [],
-    competitiveKeyInsights: [],
+    competitiveIssues: [
+      {
+        id: "1",
+        issue: "Admin",
+        category: "Service Quality",
+        yourSentiment: 76.0,
+        competitorMedianSentiment: 53.7,
+        yourMentions: 172,
+        competitorMedianMentions: 13.0,
+        relativeSentiment: 41.5,
+        relativeMentions: 1223.1,
+      },
+      {
+        id: "2",
+        issue: "Facility",
+        category: "Facility",
+        yourSentiment: 70.0,
+        competitorMedianSentiment: 50.0,
+        yourMentions: 8,
+        competitorMedianMentions: 0.0,
+        relativeSentiment: 40.0,
+        relativeMentions: 100.0,
+      },
+      {
+        id: "3",
+        issue: "Product",
+        category: "Product",
+        yourSentiment: 40.0,
+        competitorMedianSentiment: 50.0,
+        yourMentions: 23,
+        competitorMedianMentions: 4.0,
+        relativeSentiment: -20.0,
+        relativeMentions: 475.0,
+      },
+      {
+        id: "4",
+        issue: "Promo",
+        category: "Promo",
+        yourSentiment: 67.5,
+        competitorMedianSentiment: 50.0,
+        yourMentions: 16,
+        competitorMedianMentions: 6.0,
+        relativeSentiment: 35.0,
+        relativeMentions: 166.7,
+      },
+    ],
+    competitiveKeyInsights: [
+      {
+        id: "1",
+        type: "strength",
+        title: "Absolute Dominance in Customer Service (Admin)",
+        description:
+          "Bening's completely eclipses the competition in the 'Admin' category, generating over 1,200% more conversation volume than the market median while maintaining a significantly higher sentiment score (+41.5%). This indicates that front-line service, booking responsiveness, and staff hospitality are Bening's strongest competitive moats.",
+        bullets: [
+          "Admin-related conversations +1223.1% lebih tinggi dibanding median kompetitor (172 vs 13 mentions).",
+          "Sentiment admin Bening's 41.5 poin di atas median kompetitor, menunjukkan keunggulan kuat di service front-line.",
+        ],
+      },
+      {
+        id: "2",
+        type: "critical",
+        title: "Product Line Vulnerability Despite High Visibility",
+        description:
+          "While Bening's generates substantially more product-related conversations (+475% mentions compared to competitors), the sentiment score (40.0) falls 20% below the market median. This suggests a critical disconnect: despite a strong marketing push for products like Skinmology, the audience's reception is underwhelming compared to the clinical treatment experiences.",
+        bullets: [
+          "Percakapan soal produk +475% vs kompetitor, namun sentiment 20 poin di bawah median pasar.",
+          "Aktivasi produk (mis. Skinmology) belum menyamai pengalaman positif di treatment klinik.",
+        ],
+      },
+      {
+        id: "3",
+        type: "insight",
+        title: "Untapped USP in Clinic Facilities",
+        description:
+          "Competitors have almost zero organic conversations regarding their physical facilities (median mention is 0.0), whereas Bening's maintains a small but highly positive presence (70.0 sentiment) in this area. This presents a prime marketing opportunity to heavily highlight Bening's clinic ambiance, comfort, and hygiene as a unique differentiator.",
+        bullets: [
+          "Median mention fasilitas kompetitor ~0, sementara Bening's memiliki sedikit namun sangat positif (sentiment 70.0).",
+          "Fasilitas klinik (ambience, kenyamanan, kebersihan) bisa dijadikan USP utama dalam komunikasi brand.",
+        ],
+      },
+      {
+        id: "4",
+        type: "insight",
+        title: "High-Yield Promotional Strategies",
+        description:
+          "Bening's promotional strategies are outperforming the market benchmark, generating both higher conversation volumes (+166.7%) and substantially better sentiment (+35.0%). The audience is highly receptive to Bening's pricing and discount mechanics, making it a reliable driver for acquisition.",
+        bullets: [
+          "Percakapan terkait promo Bening's +166.7% di atas median kompetitor dengan sentiment +35 poin lebih tinggi.",
+          "Mekanisme harga dan diskon terbukti efektif sebagai pendorong akuisisi dan engagement kampanye.",
+        ],
+      },
+    ],
     whatsHappeningSentimentTrends: [
       { date: "Feb 25", positive: 1, negative: 0, neutral: 11 },
       { date: "Feb 26", positive: 22, negative: 0, neutral: 2 },
