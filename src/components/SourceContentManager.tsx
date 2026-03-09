@@ -371,7 +371,7 @@ export function SourceContentManager({ instanceId }: SourceContentManagerProps) 
           )}
           {activeBrandSection === "actions" && (
             <ActionsSection
-              items={store.priorityActions}
+              items={Array.isArray(store.priorityActions) ? store.priorityActions : []}
               onUpdate={(items) => updateStore((p) => ({ ...p, priorityActions: items }))}
             />
           )}
@@ -821,7 +821,7 @@ function ActionEditDialog({
           <div>
             <label className="text-xs font-medium text-slate-600 mb-1.5 block">Related issues (pisah koma)</label>
             <Input
-              value={form.relatedIssues.join(", ")}
+              value={(Array.isArray(form.relatedIssues) ? form.relatedIssues : []).join(", ")}
               onChange={(e) => setForm((p) => ({ ...p, relatedIssues: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) }))}
               placeholder="Packaging, Customer Service"
               className="rounded-xl"
@@ -850,7 +850,13 @@ function ActionEditDialog({
             </div>
           </div>
           <SourceContentEditor
-            value={form.sourceContent ?? []}
+            value={
+              Array.isArray(form.sourceContent)
+                ? form.sourceContent
+                : typeof form.sourceContent === "string"
+                  ? [{ id: "sc1", platform: "other", author: "", content: form.sourceContent, sentiment: 0, timestamp: "" }]
+                  : []
+            }
             onChange={(sourceContent) => setForm((p) => ({ ...p, sourceContent }))}
           />
         </div>
@@ -865,7 +871,7 @@ function ActionEditDialog({
 
 function SourceContentEditor({ value, onChange }: { value: SourceContentPost[]; onChange: (v: SourceContentPost[]) => void }) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const list = value ?? [];
+  const list = Array.isArray(value) ? value : [];
   const add = () => {
     const newPost: SourceContentPost = { id: generateId(), platform: "twitter", author: "", content: "", sentiment: 0, timestamp: "" };
     onChange([...list, newPost]);
