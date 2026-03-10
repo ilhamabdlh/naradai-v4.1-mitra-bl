@@ -35,6 +35,11 @@ const DEMO_USERS: Record<
     displayName: "Admin Bukalapak",
     allowedInstanceIds: ["bukalapak"],
   },
+  mitra_bukalapak: {
+    password: "bukalapak2026",
+    displayName: "Mitra Bukalapak",
+    allowedInstanceIds: ["mitra_bukalapak_dashboard"],
+  },
   admin_benings: {
     password: "benings2026",
     displayName: "Admin Benings",

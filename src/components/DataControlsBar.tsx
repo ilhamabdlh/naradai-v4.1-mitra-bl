@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { SlidersHorizontal, ChevronDown } from "lucide-react";
 import { INSTANCES } from "@/lib/instances";
 import {
@@ -15,16 +16,30 @@ const CAMPAIGNS = [
 
 interface DataControlsBarProps {
   variant?: "default" | "campaign";
+  /** Daftar campaign dari instance (untuk filter Campaign Analysis). Jika ada, dropdown menampilkan ini. */
+  campaignList?: { id: string; name: string }[];
 }
 
-export function DataControlsBar({ variant = "default" }: DataControlsBarProps) {
+export function DataControlsBar({ variant = "default", campaignList }: DataControlsBarProps) {
   const {
     pendingFilter,
+    appliedFilter,
     setPendingProject,
     setPendingTimeHorizon,
     applyFilter,
     isDirty,
   } = useDataFilter();
+
+  const options = (variant === "campaign" && campaignList?.length) ? campaignList : CAMPAIGNS;
+  const valueInOptions = options.some((o) => o.id === pendingFilter.projectId);
+  const displayValue = valueInOptions ? pendingFilter.projectId : (options[0]?.id ?? "");
+
+  useEffect(() => {
+    if (variant === "campaign" && campaignList?.length && !campaignList.some((c) => c.id === appliedFilter.projectId)) {
+      setPendingProject(campaignList[0].id);
+      applyFilter();
+    }
+  }, [variant, campaignList, appliedFilter.projectId, setPendingProject, applyFilter]);
 
   return (
     <div className="sticky top-[73px] z-40 border-b border-slate-200 bg-white/90 backdrop-blur-xl shadow-sm">
@@ -43,11 +58,11 @@ export function DataControlsBar({ variant = "default" }: DataControlsBarProps) {
               <label className="text-xs text-slate-500 shrink-0">Campaign</label>
               <div className="relative min-w-[260px]">
                 <select
-                  value={pendingFilter.projectId}
+                  value={displayValue}
                   onChange={(e) => setPendingProject(e.target.value)}
                   className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-1.5 pr-8 text-sm font-medium text-slate-800 cursor-pointer hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-colors"
                 >
-                  {CAMPAIGNS.map((c) => (
+                  {options.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                     </option>

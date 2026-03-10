@@ -231,6 +231,8 @@ export interface CompetitiveMatrixItem {
   keywords?: string[];
   /** Deskripsi posisi kompetitif brand ini di pasar. */
   competitivePosition?: string;
+  /** URL gambar logo brand untuk tampilan di Competitors Overview. */
+  logo?: string;
 }
 
 export interface CompetitorOverviewItem {
@@ -242,6 +244,8 @@ export interface CompetitorOverviewItem {
   shareOfVoice: number; // percentage 0–100
   avgSentiment: number; // 0–1
   color?: string;
+  /** URL gambar logo brand. */
+  logo?: string;
 }
 
 export interface QuadrantAnalysisItem {
@@ -340,6 +344,8 @@ export interface DashboardContentStore {
   campaignChannels?: CampaignChannelItem[];
   campaignCompetitors?: CampaignCompetitorItem[];
   campaignRecommendations?: CampaignRecommendationItem[];
+  /** Daftar campaign per instance (untuk filter Campaign Analysis). Jika ada, filter di header menampilkan daftar ini. */
+  campaigns?: CampaignListItem[];
 
   // ─── Outlet Analysis ──────────────────────────────────────────────────────
   outletStats?: OutletStatItem[];
@@ -473,6 +479,29 @@ export interface CampaignRecommendationItem {
   title: string;
   detail: string;
   impact: string;
+}
+
+/** Satu set data campaign analysis (per campaign). Dipakai untuk instance dengan banyak campaign + filter. */
+export interface CampaignAnalysisSlice {
+  campaignStats?: CampaignStatItem[];
+  campaignPerformance?: CampaignItem[];
+  campaignTrendData?: CampaignTrendDataPoint[];
+  campaignTimeSeriesData?: CampaignTimeSeriesPoint[];
+  campaignPostPublishEvents?: CampaignPostPublishEvent[];
+  campaignKeyEvents?: CampaignKeyEvent[];
+  campaignReplySentiment?: CampaignReplySentimentOverall;
+  campaignReplyTopics?: CampaignReplyTopicCluster[];
+  campaignContentTypes?: CampaignContentTypeItem[];
+  campaignTopPosts?: CampaignTopPostItem[];
+  campaignChannels?: CampaignChannelItem[];
+  campaignCompetitors?: CampaignCompetitorItem[];
+  campaignRecommendations?: CampaignRecommendationItem[];
+}
+
+export interface CampaignListItem {
+  id: string;
+  name: string;
+  data: CampaignAnalysisSlice;
 }
 
 // ─── Outlet Analysis Types ──────────────────────────────────────────────────

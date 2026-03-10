@@ -14,7 +14,7 @@ export function RisksOpportunities() {
   const opportunities = content?.opportunities ?? [];
 
   return (
-    <section id="risks-opportunities">
+    <section id="risks-opportunities" className="relative z-0 overflow-visible">
       <div className="flex items-center gap-3 mb-6">
         <ShieldAlert className="w-6 h-6 text-violet-600" />
         <div>
@@ -23,9 +23,9 @@ export function RisksOpportunities() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        {/* Risks Column */}
-        <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Risks Column - tinggi mengikuti konten, tidak dipaksa sama */}
+        <div className="flex flex-col gap-4 min-w-0">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-red-600" />
             <h3 className="text-slate-900">Risks</h3>
@@ -40,8 +40,8 @@ export function RisksOpportunities() {
           </div>
         </div>
 
-        {/* Opportunities Column */}
-        <div className="flex flex-col gap-4">
+        {/* Opportunities Column - tinggi mengikuti konten */}
+        <div className="flex flex-col gap-4 min-w-0">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-emerald-600" />
             <h3 className="text-slate-900">Opportunities</h3>

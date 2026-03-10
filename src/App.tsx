@@ -24,7 +24,8 @@ import { INSTANCES } from "@/lib/instances";
 import { loadDashboardContent } from "@/lib/dashboard-content-store";
 import { defaultFeatureVisibility, type FeatureVisibility } from "@/lib/dashboard-content-types";
 import { DashboardContentProvider } from "@/contexts/DashboardContentContext";
-import { useState, useEffect, useMemo } from "react";
+import { useDataFilter } from "@/contexts/DataFilterContext";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { initializeSchedulers } from "@/lib/scheduler-service";
 import { isAuthenticated, getAllowedInstanceIds } from "@/lib/auth";
 
@@ -37,13 +38,38 @@ function LoginGuard() {
   return <Navigate to={returnUrl} replace />;
 }
 
-function AuthGuard({ children }: { children: React.ReactNode }) {
+function AuthGuard({ children }: { children: ReactNode }) {
   const location = useLocation();
   if (!isAuthenticated()) {
     const to = "/login?returnUrl=" + encodeURIComponent(location.pathname + location.search);
     return <Navigate to={to} replace />;
   }
   return <>{children}</>;
+}
+
+/** Menggabungkan content dengan data campaign yang dipilih (untuk instance yang punya campaigns). */
+function getMergedCampaignContent(
+  content: ReturnType<typeof loadDashboardContent> | null,
+  campaignId: string
+): ReturnType<typeof loadDashboardContent> | null {
+  if (!content?.campaigns?.length) return content;
+  const camp = content.campaigns.find((c) => c.id === campaignId) ?? content.campaigns[0];
+  return { ...content, ...camp.data };
+}
+
+function CampaignAnalysisWithFilter({
+  content,
+  children,
+}: {
+  content: ReturnType<typeof loadDashboardContent> | null;
+  children: ReactNode;
+}) {
+  const { appliedFilter } = useDataFilter();
+  const merged = useMemo(
+    () => getMergedCampaignContent(content, appliedFilter.projectId),
+    [content, appliedFilter.projectId]
+  );
+  return <DashboardContentProvider content={merged}>{children}</DashboardContentProvider>;
 }
 
 function AppContent() {
@@ -102,25 +128,34 @@ function AppContent() {
         <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-cyan-100/40 via-transparent to-transparent pointer-events-none" />
         <div className="relative">
           <Header currentPage={currentPage} onNavigate={setCurrentPage} />
-          <DataControlsBar variant={currentPage === "campaign-analysis" ? "campaign" : "default"} />
+          <DataControlsBar
+            variant={currentPage === "campaign-analysis" ? "campaign" : "default"}
+            campaignList={
+              currentPage === "campaign-analysis"
+                ? (dashboardContent?.campaigns?.map((c) => ({ id: c.id, name: c.name })) ?? undefined)
+                : undefined
+            }
+          />
           <div className="flex">
             {currentPage === "brand-analysis" && <NavSidebar />}
             {currentPage === "campaign-analysis" && <CampaignNavSidebar />}
             {currentPage === "outlet-analysis" && <OutletNavSidebar />}
-            <main className="flex-1 px-6 py-8 space-y-8 max-w-[1200px] mx-auto">
+            <main className="flex-1 px-6 py-8 max-w-[1200px] mx-auto">
               {currentPage === "brand-analysis" ? (
                 <DashboardContentProvider content={dashboardContent}>
-                  {featureVisibility.statsOverview && <StatsOverview />}
-                  {featureVisibility.actionRecommendations && <ActionRecommendations />}
-                  {featureVisibility.outletSatisfaction && <OutletCustomerSatisfaction />}
-                  {featureVisibility.risksOpportunities && <RisksOpportunities />}
-                  {featureVisibility.competitiveAnalysis && <CompetitiveAnalysis />}
-                  {featureVisibility.recentInsights && <RecentInsights />}
+                  <div className="flex flex-col gap-12">
+                    {featureVisibility.statsOverview && <StatsOverview />}
+                    {featureVisibility.actionRecommendations && <ActionRecommendations />}
+                    {featureVisibility.outletSatisfaction && <OutletCustomerSatisfaction />}
+                    {featureVisibility.risksOpportunities && <RisksOpportunities />}
+                    {featureVisibility.competitiveAnalysis && <CompetitiveAnalysis />}
+                    {featureVisibility.recentInsights && <RecentInsights />}
+                  </div>
                 </DashboardContentProvider>
               ) : currentPage === "campaign-analysis" ? (
-                <DashboardContentProvider content={dashboardContent}>
+                <CampaignAnalysisWithFilter content={dashboardContent}>
                   <CampaignAnalysis />
-                </DashboardContentProvider>
+                </CampaignAnalysisWithFilter>
               ) : currentPage === "outlet-analysis" ? (
                 <DashboardContentProvider content={dashboardContent}>
                   <OutletAnalysis />

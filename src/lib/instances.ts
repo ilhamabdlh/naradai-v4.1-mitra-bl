@@ -5,6 +5,8 @@ export interface Instance {
 
 export const INSTANCES: Instance[] = [
   { id: "benings_brand_analysis_01_2026", name: "Benings" },
+  { id: "bukalapak", name: "Bukalapak" },
+  { id: "mitra_bukalapak_dashboard", name: "Mitra Bukalapak" },
 ];
 
 export const DEFAULT_INSTANCE_ID = INSTANCES[0]?.id ?? "default";

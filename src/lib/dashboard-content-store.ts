@@ -508,13 +508,28 @@ export function loadDashboardContent(instanceId: string = "default"): DashboardC
           ? parsedShareOfPlatform
           : initialShareOfPlatform) ?? defaultDashboardContent.whatsHappeningShareOfPlatform;
 
+    // Instance Mitra Bukalapak: selalu pakai risks & opportunities dari initial agar data lengkap (2 risks, 2 opportunities)
+    const useMitraBukalapakRisksOpportunities =
+      instanceId === "mitra_bukalapak_dashboard" &&
+      initial &&
+      Array.isArray(initial.risks) &&
+      initial.risks.length > 0 &&
+      Array.isArray(initial.opportunities) &&
+      initial.opportunities.length > 0;
+    const risks = useMitraBukalapakRisksOpportunities
+      ? initial!.risks
+      : (parsed.risks ?? defaultDashboardContent.risks);
+    const opportunities = useMitraBukalapakRisksOpportunities
+      ? initial!.opportunities
+      : (parsed.opportunities ?? defaultDashboardContent.opportunities);
+
     return {
       featureVisibility: parsed.featureVisibility ?? defaultDashboardContent.featureVisibility,
       statsOverview: parsed.statsOverview ?? defaultDashboardContent.statsOverview,
       priorityActions,
       outletSatisfaction: parsed.outletSatisfaction ?? defaultDashboardContent.outletSatisfaction,
-      risks: parsed.risks ?? defaultDashboardContent.risks,
-      opportunities: parsed.opportunities ?? defaultDashboardContent.opportunities,
+      risks,
+      opportunities,
       competitiveIssues:
         (Array.isArray(parsed.competitiveIssues) && parsed.competitiveIssues.length > 0
           ? parsed.competitiveIssues
@@ -577,7 +592,10 @@ export function loadDashboardContent(instanceId: string = "default"): DashboardC
         (Array.isArray(parsed.competitiveVolumeOfMentions) && parsed.competitiveVolumeOfMentions.length > 0
           ? parsed.competitiveVolumeOfMentions
           : initial?.competitiveVolumeOfMentions) ?? defaultDashboardContent.competitiveVolumeOfMentions,
-      competitiveShareOfVoice: parsed.competitiveShareOfVoice ?? defaultDashboardContent.competitiveShareOfVoice,
+      competitiveShareOfVoice:
+        (instanceId === "mitra_bukalapak_dashboard" && Array.isArray(initial?.competitiveShareOfVoice) && initial.competitiveShareOfVoice.length > 0)
+          ? initial.competitiveShareOfVoice
+          : (parsed.competitiveShareOfVoice ?? initial?.competitiveShareOfVoice ?? defaultDashboardContent.competitiveShareOfVoice),
       competitiveBrandLabels: parsed.competitiveBrandLabels ?? initial?.competitiveBrandLabels ?? defaultDashboardContent.competitiveBrandLabels,
       rawSourceContents: (Array.isArray(parsed.rawSourceContents) && parsed.rawSourceContents.length > 0 ? parsed.rawSourceContents : initial?.rawSourceContents) ?? defaultDashboardContent.rawSourceContents,
       // Campaign Analysis
@@ -594,6 +612,7 @@ export function loadDashboardContent(instanceId: string = "default"): DashboardC
       campaignChannels: (Array.isArray(parsed.campaignChannels) && parsed.campaignChannels.length > 0 ? parsed.campaignChannels : initial?.campaignChannels) ?? defaultDashboardContent.campaignChannels,
       campaignCompetitors: (Array.isArray(parsed.campaignCompetitors) && parsed.campaignCompetitors.length > 0 ? parsed.campaignCompetitors : initial?.campaignCompetitors) ?? defaultDashboardContent.campaignCompetitors,
       campaignRecommendations: (Array.isArray(parsed.campaignRecommendations) && parsed.campaignRecommendations.length > 0 ? parsed.campaignRecommendations : initial?.campaignRecommendations) ?? defaultDashboardContent.campaignRecommendations,
+      campaigns: (instanceId === "mitra_bukalapak_dashboard" && initial?.campaigns?.length) ? initial.campaigns : (parsed.campaigns ?? initial?.campaigns),
       // Outlet Analysis
       outletStats: (Array.isArray(parsed.outletStats) && parsed.outletStats.length > 0 ? parsed.outletStats : initial?.outletStats) ?? defaultDashboardContent.outletStats,
       outletPriorityActions: (Array.isArray(parsed.outletPriorityActions) && parsed.outletPriorityActions.length > 0 ? parsed.outletPriorityActions : initial?.outletPriorityActions) ?? defaultDashboardContent.outletPriorityActions,
