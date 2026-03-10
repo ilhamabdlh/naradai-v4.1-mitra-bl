@@ -105,6 +105,13 @@ function AppContent() {
     setDashboardContent(content);
   }, [currentPage, currentInstanceId]);
 
+  // Untuk Mitra Bukalapak, tab Outlet Analysis disembunyikan; jika sedang di outlet, alihkan ke brand-analysis
+  useEffect(() => {
+    if (currentInstanceId === "mitra_bukalapak_dashboard" && currentPage === "outlet-analysis") {
+      setCurrentPage("brand-analysis");
+    }
+  }, [currentInstanceId, currentPage]);
+
   const handleInstanceChange = (instanceId: string) => {
     setCurrentInstanceId(instanceId);
     localStorage.setItem("naradai_current_instance", instanceId);
@@ -114,7 +121,7 @@ function AppContent() {
   if (isProjectConfig) {
     return (
       <DataFilterProvider initialProjectId={currentInstanceId}>
-        <Header currentPage={currentPage} onNavigate={setCurrentPage} />
+        <Header currentPage={currentPage} onNavigate={setCurrentPage} instanceId={currentInstanceId} />
         <DataControlsBar />
         <ProjectConfig />
       </DataFilterProvider>
@@ -127,7 +134,7 @@ function AppContent() {
         <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-violet-100/40 via-transparent to-transparent pointer-events-none" />
         <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-cyan-100/40 via-transparent to-transparent pointer-events-none" />
         <div className="relative">
-          <Header currentPage={currentPage} onNavigate={setCurrentPage} />
+          <Header currentPage={currentPage} onNavigate={setCurrentPage} instanceId={currentInstanceId} />
           <DataControlsBar
             variant={currentPage === "campaign-analysis" ? "campaign" : "default"}
             campaignList={

@@ -1,8 +1,10 @@
 import { useMemo } from "react";
-import { Trophy, MessageSquare, Mic2, Smile, PieChart, BarChart3 } from "lucide-react";
+import { Trophy, MessageSquare, Mic2, Smile, PieChart, BarChart3, LayoutGrid, Grid3X3 } from "lucide-react";
 import { ShareOfPlatform } from "./ShareOfPlatform";
 import { ShareOfVoiceChart } from "./ShareOfVoiceChart";
 import { CompetitiveMatrixChart } from "./CompetitiveMatrixChart";
+import { CompetitiveIssuesMatrixChart } from "./CompetitiveIssuesMatrixChart";
+import { CompetitiveHeatmapsView } from "./CompetitiveHeatmapsView";
 import { useDashboardContent } from "@/contexts/DashboardContentContext";
 import type { CompetitorOverviewItem } from "@/lib/dashboard-content-types";
 
@@ -184,6 +186,25 @@ export function CompetitiveAnalysis() {
         </div>
       </div>
 
+      {/* Competitive Issues Matrix (quadrant: relative sentiment vs relative mentions) */}
+      <div
+        id="competitive-issues-matrix"
+        className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-100 to-cyan-100 flex items-center justify-center">
+            <LayoutGrid className="w-5 h-5 text-violet-600" />
+          </div>
+          <div>
+            <h4 className="text-slate-900 mb-0.5">Competitive Issues Matrix</h4>
+            <p className="text-xs text-slate-600">
+              Position relative to competitor median performance
+            </p>
+          </div>
+        </div>
+        <CompetitiveIssuesMatrixChart />
+      </div>
+
       {/* Competitive Matrix (bubble) */}
       <div
         id="competitive-matrix"
@@ -201,8 +222,27 @@ export function CompetitiveAnalysis() {
         <CompetitiveMatrixChart />
       </div>
 
+      {/* Competitive Issues Heatmaps (Sentiment Scores + Volume of Mentions) */}
+      <div
+        id="competitive-heatmaps"
+        className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-100 to-cyan-100 flex items-center justify-center">
+            <Grid3X3 className="w-5 h-5 text-violet-600" />
+          </div>
+          <div>
+            <h4 className="text-slate-900 mb-0.5">Competitive Issues Heatmaps</h4>
+            <p className="text-xs text-slate-600">
+              Sentiment scores and volume of mentions by issue and brand
+            </p>
+          </div>
+        </div>
+        <CompetitiveHeatmapsView />
+      </div>
+
       {/* Share of Platform (full width) */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+      <div id="share-of-platform" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
             <PieChart className="w-4 h-4 text-violet-600" />
@@ -218,7 +258,7 @@ export function CompetitiveAnalysis() {
       </div>
 
       {/* Share of Voice (full width, stacked bar) */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+      <div id="share-of-voice" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
             <BarChart3 className="w-4 h-4 text-violet-600" />

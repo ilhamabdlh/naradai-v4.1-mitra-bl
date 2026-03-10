@@ -115,21 +115,22 @@ export function ActionDetailsModal({ action, onClose, onStatusChange, currentSta
     return sources[actionId] || [];
   };
 
-  // Daftar post untuk Source Content: pakai sourceUsername + sourceContent (string) atau sourceContent (array)
+  // Daftar post untuk Source Content: sourceContent string (dengan atau tanpa sourceUsername), atau array
   const sourcePosts: Array<{ id: string; platform: string; author: string; content: string; sentiment: number; timestamp: string; engagement?: { likes: number; replies: number; retweets: number } }> = (() => {
-    if (action.sourceUsername != null && typeof action.sourceContent === "string") {
+    if (typeof action.sourceContent === "string") {
       let sentimentNum = 0;
       if (typeof action.metrics?.sentiment === "number") {
         sentimentNum = action.metrics.sentiment;
-      } else if (typeof action.metrics?.sentiment === "string" && /[-+]?\d+(\.\d+)?/.test(action.metrics.sentiment)) {
-        const n = parseFloat(action.metrics.sentiment.replace(/^.*?([-+]?\d+(\.\d+)?).*$/, "$1"));
-        sentimentNum = /negative/i.test(action.metrics.sentiment) ? -n / 100 : (n / 100) * 2 - 1;
+      } else if (typeof action.metrics?.sentiment === "string" && /[-+]?\d+(\.\d+)?%?/.test(String(action.metrics.sentiment))) {
+        const raw = String(action.metrics.sentiment).replace(/%/g, "");
+        const n = parseFloat(raw.replace(/^.*?([-+]?\d+(\.\d+)?).*$/, "$1"));
+        if (!isNaN(n)) sentimentNum = n <= 1 ? n * 2 - 1 : (n / 100) * 2 - 1;
       }
       return [
         {
           id: "source-1",
           platform: "tiktok",
-          author: action.sourceUsername,
+          author: action.sourceUsername ?? "—",
           content: action.sourceContent,
           sentiment: sentimentNum,
           timestamp: "—",

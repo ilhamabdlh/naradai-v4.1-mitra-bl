@@ -36,7 +36,8 @@ const navItems: NavItem[] = [
       label: "Competitive Analysis",
       icon: Swords,
       children: [
-        { id: "competitive-analysis", label: "Issues Matrix" },
+        { id: "competitive-analysis", label: "Competitors Overview" },
+        { id: "competitive-issues-matrix", label: "Issues Matrix" },
         { id: "competitive-matrix", label: "Competitive Matrix" },
         { id: "competitive-heatmaps", label: "Heatmaps" },
         { id: "share-of-platform", label: "Share of Platform" },

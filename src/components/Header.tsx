@@ -15,9 +15,14 @@ export type NavPage = "brand-analysis" | "campaign-analysis" | "outlet-analysis"
 interface HeaderProps {
   currentPage: NavPage;
   onNavigate: (page: NavPage) => void;
+  /** Instance id; jika "mitra_bukalapak_dashboard" tab Outlet Analysis disembunyikan */
+  instanceId?: string;
 }
 
-export function Header({ currentPage, onNavigate }: HeaderProps) {
+const MITRA_BUKALAPAK_INSTANCE_ID = "mitra_bukalapak_dashboard";
+
+export function Header({ currentPage, onNavigate, instanceId }: HeaderProps) {
+  const hideOutletAnalysis = instanceId === MITRA_BUKALAPAK_INSTANCE_ID;
   const navigate = useNavigate();
   const user = getAuthUser();
 
@@ -68,17 +73,19 @@ export function Header({ currentPage, onNavigate }: HeaderProps) {
                 <Megaphone className="w-4 h-4" />
                 Campaign Analysis
               </button>
-              <button
-                onClick={() => handleNav("outlet-analysis")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  currentPage === "outlet-analysis"
-                    ? "bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-md"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <Store className="w-4 h-4" />
-                Outlet Analysis
-              </button>
+              {!hideOutletAnalysis && (
+                <button
+                  onClick={() => handleNav("outlet-analysis")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    currentPage === "outlet-analysis"
+                      ? "bg-gradient-to-r from-violet-500 to-cyan-500 text-white shadow-md"
+                      : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  <Store className="w-4 h-4" />
+                  Outlet Analysis
+                </button>
+              )}
               <button
                 onClick={() => handleNav("source-contents")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
